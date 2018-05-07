@@ -37,3 +37,53 @@
 
 
 ;; Exercise 1.2 ========================================
+
+(/ (+ 5 4 (- 2 (- 3 (+ 6 4/5))))
+   (* 3 (- 6 2) (- 2 7)))         ;; ==> -37/150
+
+
+
+;; Exercise 1.2 ========================================
+
+;; Procedure f(x,y,z) returns sum of the squares
+;; of the two larger arguments.
+
+(define (square a) (* a a))
+
+;; Sum of squares.
+(define (sos a b) 
+  (+ (square a) (square b)))
+
+(define (sos-larger x y z) 
+  (cond ((and (<= x y) (<= x z)) (sos y z))
+        ((and (<= y x) (<= y z)) (sos x z))
+        (else (sos x y))))
+
+;; Make this into many-arg function testing.
+(for-each (lambda (args expected) 
+            (check-equal? 
+             (sos-larger (car args) (cadr args) (caddr args))
+             expected))
+          (list '(1 1 1) '(1 1 3) '(1 2 3)
+                '(3 2 1) '(2 3 1) '(3 3 1) 
+                '(3 1 3) '(1 3 1))
+          (list 2 10 13 
+                13 13 18 
+                18 10))
+
+
+
+;; Exercise 1.4 ========================================
+
+;; Describe how this works.
+
+(define (a-plus-abs-b a b)
+  ((if (> b a) + -) a b))
+
+;; If b > a then you add a and b ==> a + (positive b) ==> a + |b|
+;; If b < a then subtract, a - b ==> a - (negative b) ==> a + |b|
+;; Clever!
+
+
+
+;; Exercise 1.5 ========================================
