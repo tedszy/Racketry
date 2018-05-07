@@ -1,0 +1,15 @@
+compile
+flycheck_*
+.DS_Store
+DS_Store
+._*
+*.*~
+*~
+*.swp
+*.swo
+*.zo
+DS_Store
+[#]*[#]
+.[#]*[#]
+.[#]*
+
