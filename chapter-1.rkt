@@ -43,7 +43,7 @@
 
 
 
-;; Exercise 1.2 ========================================
+;; Exercise 1.3 ========================================
 
 ;; Procedure f(x,y,z) returns sum of the squares
 ;; of the two larger arguments.
@@ -84,3 +84,30 @@
 
 
 ;; Exercise 1.5 ========================================
+
+;; Evaluate then apply ==> applicative order.
+;; Expand then reduce  ==> normal order.
+
+;; If you call this function you get an endless loop.
+(define (p) (p))
+
+(define (test-evaluation-order x y)
+  (if (= x 0) 0 y))
+
+;; Applicative order. Evaluate then apply.
+;; (test-evaluation-order 0 (p))
+;;                        ^  ^
+;;                           This is evaluated ==> infinite loop.
+
+;; Normal order. Expand then reduce.
+;; (test-evaluation-order 0 (p))
+;; (if (= 0 0) 0 (p))
+;; (if #t      0 (p)) ;; predicate evaluated first.
+;;             ^
+;;             This branch is taken, returning 0.
+;;
+;; So,
+;; Applicative order ==> infinite loop.
+;; Normal order      ==> 0.
+
+
