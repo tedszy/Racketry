@@ -4,7 +4,7 @@
 
 #lang racket
 
-(require rackunit)
+(require "check.rkt")
 
 
 ;; Exercise 1.1 ========================================
@@ -59,18 +59,15 @@
         ((and (<= y x) (<= y z)) (sos x z))
         (else (sos x y))))
 
-;; Make this into many-arg function testing.
-(for-each (lambda (args expected) 
-            (check-equal? 
-             (sos-larger (car args) (cadr args) (caddr args))
-             expected))
-          (list '(1 1 1) '(1 1 3) '(1 2 3)
-                '(3 2 1) '(2 3 1) '(3 3 1) 
-                '(3 1 3) '(1 3 1))
-          (list 2 10 13 
-                13 13 18 
-                18 10))
-
+(check-me sos-larger 
+          '((1 1 1) . 2)
+          '((1 1 3) . 10)
+          '((1 2 3) . 13)
+          '((3 2 1) . 13)
+          '((2 3 1) . 13)
+          '((3 3 1) . 18)
+          '((3 1 3) . 18)
+          '((1 3 1) . 10))
 
 
 ;; Exercise 1.4 ========================================
