@@ -1,6 +1,6 @@
-;;; chapter-1.rkt
+;;; chapter-1a.rkt
 ;;;
-;;; Exercises from chapter 1.
+;;; 
 
 #lang racket
 
