@@ -25,5 +25,33 @@
 (define (format-string s width align)
   (~a #:width width #:align align s))
 
+;; A "table" is a list of lists of strings.
+
 (define (transpose table)
   (apply map list table))
+
+(define (get-max-length-of-string-list string-list)
+  (apply max (map string-length string-list)))
+
+(define (get-max-column-widths table)
+  (map get-max-length-of-string-list (transpose table)))
+
+(define standard-column-separator "  ")
+(define standard-row-separator "\n")
+
+;; The most common alignment that I use is left-aligned
+;; for the first column, then right-aligned for all the rest.
+(define (print-table tt)
+  (let ((column-widths (get-max-column-widths tt))
+        (alignments (cons 'left 
+                          (make-list (sub1 (length (car tt))) 'right))))
+    
+    ;; here.
+
+    ))
+
+
+
+
+;; test
+(define tt '(("1" "2" "3") ("10" "20" "30") ("100" "200" "300")))
