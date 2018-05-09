@@ -79,7 +79,7 @@
 
 ;; If b > a then you add a and b ==> a + (positive b) ==> a + |b|
 ;; If b < a then subtract, a - b ==> a - (negative b) ==> a + |b|
-;; Clever!
+;; The operator in this case is a compound expression.
 
 
 
