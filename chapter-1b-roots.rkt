@@ -27,9 +27,9 @@
              (loop avg
                    (sub1 n-rows)
                    (cons (list (number->string y)
-                         (number->string q)
-                         (number->string avg)
-                         (format-real avg 8))
+                               (number->string q)
+                               (number->string avg)
+                               (format-real avg 8))
                          table)))))))
 
 ;; (sqrt-table 2 4)
@@ -40,7 +40,20 @@
 ;;   17/12 |        24/17 |             577/408 |  1.41421569
 ;; 577/408 |      816/577 |       665857/470832 |  1.41421356 
 (define (sqrt-table x n)
-  (print-table (sqrt-approximation-table x n )))
+  (print-table (sqrt-approximation-table x n)))
+
+;; Roll all the SICP code relating to numerical 
+;; square root into one procedure using a named let. 
+;; Note the use of free-variable x.
+(define (my-sqrt x)
+  (define tolerance 0.000001)
+  (define (average a b) (/ (+ a b) 2))
+  (define (improve y) (average y (/ x y)))
+  (define (good-enough? y) (< (abs (- (* y y) x)) tolerance))
+  (let loop ((y 1.0))
+    (if (good-enough? y) 
+        y 
+        (loop (improve y)))))
 
 
 
