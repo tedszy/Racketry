@@ -1,11 +1,18 @@
 ;;; simple-table.rkt
 ;;;
-;;; Simple, no nonsense ways of displaying 
+;;; Simple, no nonsense tools for displaying 
 ;;; list-of-lists in aligned columns.
 
 #lang racket
 
 (require racket/format)
+
+(provide format-integer
+         format-bits
+         format-real
+         format-string
+         transpose
+         print-table)
 
 (define (format-integer n)
   (number->string n))
@@ -36,22 +43,43 @@
 (define (get-max-column-widths table)
   (map get-max-length-of-string-list (transpose table)))
 
-(define standard-column-separator "  ")
+(define standard-column-separator " | ")
 (define standard-row-separator "\n")
 
 ;; The most common alignment that I use is left-aligned
 ;; for the first column, then right-aligned for all the rest.
-(define (print-table tt)
-  (let ((column-widths (get-max-column-widths tt))
+(define (print-table table)
+  (let ((column-widths (get-max-column-widths table))
         (alignments (cons 'left 
-                          (make-list (sub1 (length (car tt))) 'right))))
-    
-    ;; here.
-
-    ))
-
-
-
+                          (make-list (sub1 (length (car table))) 'right)))
+        (out (open-output-string)))
+    (for-each (lambda (row)
+                (let loop ((row row)
+                           (column-widths column-widths)
+                           (alignments alignments))
+                  (let ((cell-text (format-string (car row)
+                                                  (car column-widths)
+                                                  (car alignments))))
+                    (cond ((null? (cdr row))
+                           ;; We are at the last cell of the row,
+                           ;; so handle it differently. Put row
+                           ;; separator instead of column separator.
+                           ;; And don't recurse. We're done with the row.
+                           (fprintf out "~a~a"
+                                    cell-text
+                                    standard-row-separator))
+                          (else
+                           (fprintf out "~a~a"
+                                    cell-text
+                                    standard-column-separator)
+                           (loop (cdr row)
+                                 (cdr column-widths)
+                                 (cdr alignments)))))))
+              table)
+    (display (get-output-string out))))
 
 ;; test
-(define tt '(("1" "2" "3") ("10" "20" "30") ("100" "200" "300")))
+(define tt '(("zarf" "greeblies" "terwilligbert")
+             ("1" "2" "3")
+             ("10" "20" "30")
+             ("100" "200" "300")))
