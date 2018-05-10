@@ -7,15 +7,11 @@
 
 (require racket/format)
 
-(provide format-integer
-         format-bits
+(provide format-bits
          format-real
          format-string
          transpose
          print-table)
-
-(define (format-integer n)
-  (number->string n))
 
 ;; (format-bits 1024 32) ==> "00000000000000000000010000000000"
 (define (format-bits n width)
@@ -46,12 +42,14 @@
 (define standard-column-separator " | ")
 (define standard-row-separator "\n")
 
-;; The most common alignment that I use is left-aligned
-;; for the first column, then right-aligned for all the rest.
-(define (print-table table)
+
+;; If alignment list is not specified, alignments 
+;; default to right for every cell.
+(define (print-table table #:align [alignments null])
   (let ((column-widths (get-max-column-widths table))
-        (alignments (cons 'left 
-                          (make-list (sub1 (length (car table))) 'right)))
+        (alignments (if (null? alignments)
+                        (make-list (length (car table)) 'right)
+                        alignments))
         (out (open-output-string)))
     (for-each (lambda (row)
                 (let loop ((row row)
