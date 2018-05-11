@@ -46,7 +46,7 @@
 ;; square root into one procedure using a named let. 
 ;; Note the use of free-variable x.
 (define (my-sqrt x)
-  (define tolerance 0.000001)
+  (define tolerance 0.00001)
   (define (average a b) (/ (+ a b) 2))
   (define (improve y) (average y (/ x y)))
   (define (good-enough? y) (< (abs (- (* y y) x)) tolerance))
@@ -110,7 +110,12 @@
 
 ;; But now use alyssa-if and the function never
 ;; returns anything, since the loop branch is
-;; always called.
+;; always called. Note: according to the applicative
+;; model, 'result' is evaluated. But 'evaluated' and
+;; 'returned' are two different notions. A function
+;; returns a value only after it's arguments have
+;; been evaluated and it has been applied to the 
+;; results of those evaluations. 
 
 (define (alyssa-product n)
   (let loop ((i 1) (result 1))
@@ -124,3 +129,21 @@
 
 
 ;; Exercise 1.7 ========================================
+
+;; my-sqrt as written above should fail for very small
+;; and very large x. First let's illustrate this.
+
+(define small-number 0.00001)
+(my-sqrt small-number)
+(sqrt small-number)
+
+(define large-number 20000000000)
+(my-sqrt large-number)
+(sqrt large-number)
+
+;; It gives the wrong answer for very small numbers,
+;; and it takes too long for very large numbers.
+;; Rather than use an absolute tolerance, we will
+;; try an adaptive one: stop iterating when the
+;; change in y is a small fraction of y.
+
