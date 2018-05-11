@@ -59,4 +59,68 @@
 
 ;; Exercise 1.6 ========================================
 
+;; Alyssa writes 'if' as a function rather than a special form.
+(define (alyssa-if predicate true-branch false-branch)
+  (cond (predicate 
+         true-branch)
+        (else 
+         false-branch)))
 
+;; The problem with this is that 'alyssa-if' is a
+;; function so it is evaluated with applicative order.
+;; The arguments are evaluated then the function is
+;; applied.
+
+(alyssa-if (= 2 3) 0 5) ;; ==> 5
+(alyssa-if (= 1 1) 0 5) ;; ==> 0
+
+;; So far it works ok. But let's use it to rewrite
+;; the square root function.
+(define (alyssa-sqrt x)
+  (define tolerance 0.000001)
+  (define (average a b) (/ (+ a b) 2))
+  (define (improve y) (average y (/ x y)))
+  (define (good-enough? y) (< (abs (- (* y y) x)) tolerance))
+  (let loop ((y 1.0))
+    (alyssa-if (good-enough? y) 
+               y 
+               (loop (improve y)))))
+
+;; This never terminates because (!) both
+;; arguments of the alyssa-if are evaluated.
+;; That means the second argument is always 
+;; evaluated. And so the loop continues no 
+;; matter what happens with the good-enough?
+;; test in the first argument. 
+
+;; Indeed we can see this even more clearly
+;; by contriving an example based on integer
+;; products. Multiply out all numbers from 
+;; 1 to n using recursion. Do the test with 
+;; normal 'if'.
+
+(define (product n)
+  (let loop ((i 1) (result 1))
+    (if (= i n)
+        result
+        (loop (add1 i)
+              (* i result)))))
+
+(product 10) ;; => 362880
+
+;; But now use alyssa-if and the function never
+;; returns anything, since the loop branch is
+;; always called.
+
+(define (alyssa-product n)
+  (let loop ((i 1) (result 1))
+    (alyssa-if (= i n)
+               result
+               (loop (add1 i)
+                     (* i result)))))
+
+;; (alyssa-product 10) ==> never ends
+
+
+
+;; Exercise 1.7 ========================================
