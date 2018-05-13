@@ -134,16 +134,81 @@
 ;; and very large x. First let's illustrate this.
 
 (define small-number 0.00001)
+(define large-number 200000000000)
+
+;; my-sqrt gives inaccurate answer.
 (my-sqrt small-number)
 (sqrt small-number)
 
-(define large-number 20000000000)
-(my-sqrt large-number)
-(sqrt large-number)
+;; my-sqrt takes forever.
+;; (my-sqrt large-number)
+;; (sqrt large-number)
 
 ;; It gives the wrong answer for very small numbers,
 ;; and it takes too long for very large numbers.
 ;; Rather than use an absolute tolerance, we will
 ;; try an adaptive one: stop iterating when the
-;; change in y is a small fraction of y.
+;; change in y is a small fraction of y. Indeed
+;; it's pointless to do so many iterations on a 
+;; very large number since the improvements cannot
+;; be captured by the finite precision of floats.
 
+(define (my-adaptive-sqrt x)
+  (define tolerance 0.0000001)
+  (define (average a b) (/ (+ a b) 2))
+  (define (improve y) (average y (/ x y)))
+  (define (good-enough? y) 
+    (< (/ (abs (- y (improve y))) y) tolerance))
+  (let loop ((y 1.0))
+    (if (good-enough? y) 
+        y 
+        (loop (improve y)))))
+
+;; (adaptive-sqrt-demo)
+;;            x |       adaptive-sqrt x |       built-in sqrt x
+;;        1e-05 | 0.0031622926477232706 | 0.0031622776601683794
+;; 200000000000 |      447213.595499958 |     447213.5954999579
+(define (adaptive-sqrt-demo)
+  (print-table
+    (list (list "x" "adaptive-sqrt x" "built-in sqrt x")
+          (list (number->string small-number)
+                (number->string (my-adaptive-sqrt small-number))
+                (number->string (sqrt small-number)))
+          (list (number->string large-number)
+                (number->string (my-adaptive-sqrt large-number))
+                (number->string (sqrt large-number))))))
+
+
+
+;; Exercise 1.8 ========================================
+
+;; Newton's method for cube roots.
+;;
+;; y -> (x/y^2 + 2*y)/3
+;; 
+;; Might as well make it adaptive.
+(define (my-adaptive-cuberoot x)
+  (define tolerance 0.0000001)
+  (define (improve y) 
+    (/ (+ (/ x (* y y)) (* 2 y)) 3))
+  (define (good-enough? y) 
+    (< (/ (abs (- y (improve y))) y) tolerance))
+  (let loop ((y 1.0))
+    (if (good-enough? y) 
+        y 
+        (loop (improve y)))))
+
+;; (adaptive-cuberoot-demo)
+;;            x |  adaptive-cuberoot x |  built-in cuberoot x
+;;        1e-05 | 0.021544346925573252 | 0.021544346900318843
+;; 200000000000 |    5848.035476437416 |    5848.035476425729
+(define (adaptive-cuberoot-demo)
+  (define (cuberoot x) (expt x 1/3))
+  (print-table
+    (list (list "x" "adaptive-cuberoot x" "built-in cuberoot x")
+          (list (number->string small-number)
+                (number->string (my-adaptive-cuberoot small-number))
+                (number->string (cuberoot small-number)))
+          (list (number->string large-number)
+                (number->string (my-adaptive-cuberoot large-number))
+                (number->string (cuberoot large-number))))))
