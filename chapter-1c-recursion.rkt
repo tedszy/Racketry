@@ -97,3 +97,46 @@
 
 
 ;; Exercise 1.10 ========================================
+
+;; The Ackerman function.
+(define (ackermann x y)
+  (cond ((= y 0) 0)
+        ((= x 0) (* 2 y))
+        ((= y 1) 2)
+        (else
+         (ackermann (- x 1)
+                    (ackermann x (- y 1))))))
+
+(check-me ackermann 
+          '((1 10) . 1024)
+          '((2 4)  . 65536)
+          '((3 3)  . 65536))
+
+;; Give mathematical descriptions of what these functions are.
+(define (f n) (ackermann 0 n))
+(define (g n) (ackermann 1 n))
+(define (h n) (ackermann 2 n))
+(define (k n) (* 5 n n))
+
+;; Don't do ackerman table on n>4.
+;; (ackermann-table 4)
+;; n | f |  g |     h |  k
+;; 1 | 2 |  2 |     2 |  5
+;; 2 | 4 |  4 |     4 | 20
+;; 3 | 6 |  8 |    16 | 45
+;; 4 | 8 | 16 | 65536 | 80
+;; 
+;; From the table we conjecture 
+;; f(n) = 2*n
+;; g(n) = 2^n
+;; h(n) = 2^[(2^(n-1)]^2
+;; k(n) = 5*n^2.
+(define (ackermann-table n)
+  (print-table 
+   (let loop ((i 1) (table (list (list "n" "f" "g" "h" "k"))))
+     (if (> i n )
+         (reverse table)
+         (loop (+ i 1)
+               (cons (map number->string 
+                          (list i (f i) (g i) (h i) (k i)))
+                     table))))))
