@@ -1,6 +1,4 @@
-;;; chapter-1b-roots.rkt
-;;;
-;;;
+;;; sicp-1b-roots.rkt
 
 #lang racket
 

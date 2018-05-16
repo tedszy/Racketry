@@ -1,6 +1,4 @@
-;;; chapter-1c-recursion.rkt
-;;;
-;;;
+;;; sicp-1c-recursion.rkt
 
 #lang racket
 

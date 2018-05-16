@@ -1,6 +1,4 @@
-;;; chapter-1a.rkt
-;;;
-;;; 
+;;; sicp-1a-eval.rkt
 
 #lang racket
 
