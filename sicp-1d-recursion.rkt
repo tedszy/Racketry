@@ -36,8 +36,10 @@
         a
         (loop b (+ a b) (- n 1)))))
 
-;; Making change for a given sum M. A refactored
-;; version of the one in SICP.
+;; Making change for a given amount M. A refactored
+;; version of the one in SICP. "Making change" is
+;; actually finding a linear combination of coins
+;; with coefficients >= 0, totalling M. 
 ;;
 ;; 1 dollar into change ==> half dollars, quarters,
 ;;                          dimes, nickels, pennies.
@@ -52,10 +54,10 @@
     (nickel . 5)
     (penny . 1)))
 
-;; Some rules for base cases.
+;; Base cases.
 ;; 
 ;; If the amount M is 0, there is only one way
-;; to make a linear combination of coins that equal M.
+;; to make a linear combination of coins that equals M.
 ;; That is, all coefficients are zero. So we should
 ;; count this as one way.
 ;;
@@ -69,7 +71,7 @@
 ;; However, what if M=0 and length of database is 0?
 ;; Can this happen?
 ;;
-;; Now, the reduction step, whereby the problem is
+;; Now, the recursion step, whereby the problem is
 ;; reduced to a smaller problem.
 ;;
 ;; Suppose our coins are (coin-symbol . value) pairs:
@@ -77,21 +79,25 @@
 ;; coins = '((a . A) (b . B) (c . C) ....)
 ;;
 ;; #(M, coins) = number of ways to make linear combinations of
-;;               the coins totalling M using all these coins
+;;               the coins totalling M using all coins
 ;;
 ;; Let (a . A) be the first coin-value pair in the database.
-;; Then #(M, coins) = number of combinations without using (a . A)
+;;
+;; Then #(M, coins) = number of combinations without coin (a . A)
 ;;                  + number of combinations using at at least 
-;;                    one (a . A). That is, M has been
-;;                    decreased by A (the value of coin a).
+;;                    one (a . A). 
 ;;
 ;; #(M,coins) = #(M, (cdr coins)) + #(M-A, coins)
 ;;
-;; In the second term, we have chosen one coin (a . A). But
-;; we can choose more of the same if we like so the choice is
-;; over all coins. Again:
+;; In the second term, we have chosen one coin (a . A), and that
+;; is why M has been decreased by A. But we can choose more of 
+;; the same if we like so the choice is over all coins. Again:
 ;;
-;; # of ways = # ways without first + # ways with at least one first.  
+;; # of ways = # ways without first coin 
+;;             + # ways with at least one first coin.  
+;; 
+;; This reduces the original problem to a smaller one. In one term
+;; the coin database is smaller, in the other term the amount is smaller.
 (define (ways-to-make-change M)
   (let loop ((M M) (coins coin-database))
     (cond ((= M 0) 1) 
@@ -103,17 +109,38 @@
 
 (check-me ways-to-make-change '((100) . 292))
 
-;; Exercise 1.10 ========================================
-
-
-
-
-
-
-
-
 ;; Exercise 1.11 ========================================
+
+;; f(n) = n if n < 3.
+;; f(n) = f(n-1) + 2*f(n-2) + 3*f(n-3) if n >= 3.
+
+;; Recursive process.
+(define (three-way-fibonacci1 n)
+  (cond ((< n 3) n)
+        (else 
+         (+ (three-way-fibonacci1 (- n 1))
+            (* 2 (three-way-fibonacci1 (- n 2)))
+            (* 3 (three-way-fibonacci1 (- n 3)))))))
+
+;; Iterative (tail) recursive process.
+;;
+;; 0 1 2 (0+2*1+3*2 = 8) (1+2*2+3*8 = 29)
+;; a b c      
+;;   a b     c     
+;;     a     b                  c   
+;;        
+(define (three-way-fibonacci2 n)
+  (let loop ((a 0) (b 1) (c 2) (n n))
+    (if (= n 0)
+        a
+        (loop b c (+ c (* 2 b) (* 3 a)) (- n 1)))))
+
 
 
 ;; Exercise 1.12 ========================================
+
+
+
+;; Exercise 1.13 ========================================
+
 
