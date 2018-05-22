@@ -203,3 +203,5 @@
 ;;        = (p^(n+1) - q^(n+1))/sqrt(5)
 ;;
 ;; and therefore Q(n), Q(n-1) imply Q(n+1). QED.
+;;
+;; And as n->large, q^n -> 0, so F ~ (p^n)/sqrt(5).
