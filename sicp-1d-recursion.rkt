@@ -172,4 +172,34 @@
 
 ;; Exercise 1.13 ========================================
 
-
+;; p = (1 + sqrt(5))/2,   q = (1 - sqrt(5))/2.
+;; Prove that F(n) = (p^n - q^n)/sqrt(5)
+;; and that F(n) -> [(p^n)/sqrt(5)].
+;; 
+;; We use strong induction. Verify statements Q(0), Q(1).
+;;
+;; F(0) = (p^0 - q^0)/sqrt(5) = (1 - 1)/sqrt(5) = 0
+;; F(1) = (p^1 - q^1)/sqrt(5)
+;;      = (1 + sqrt(5) - 1 + sqrt(5))/2*sqrt(5)
+;;      = 2*sqrt(5)/2*sqrt(5)
+;;      = 1
+;;
+;; Now assume that Q(n) and Q(n-1) are true and see if
+;; this implies Q(n+1).
+;;
+;; F(n+1) = F(n) + F(n-1)
+;;        = (p^n - q^n)/sqrt(5) + (p^(n-1) - q^(n-1))/sqrt(5)
+;;        = (p^n + p^(n-1) - (q^n + q^(n-1)))/sqrt(5)
+;;
+;; p^n + p^(n-1) = p^(n-1)*(p + 1)
+;; q^n + q^(n-1) = q^(n-1)*(q + 1)
+;;
+;; But p + 1 = (3 + sqrt(5))/2 = p^2
+;; and q + 1 = (3 - sqrt(5))/2 = q^2
+;;
+;; Therefore,
+;;
+;; F(n+1) = (p^(n-1)*p^2 - q^(n-1)*q^2)/sqrt(5)
+;;        = (p^(n+1) - q^(n+1))/sqrt(5)
+;;
+;; and therefore Q(n), Q(n-1) imply Q(n+1). QED.
