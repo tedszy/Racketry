@@ -109,6 +109,8 @@
 
 (check-me ways-to-make-change '((100) . 292))
 
+
+
 ;; Exercise 1.11 ========================================
 
 ;; f(n) = n if n < 3.
@@ -138,6 +140,33 @@
 
 
 ;; Exercise 1.12 ========================================
+
+;; Pascal's triangle by recursion.
+;; 
+;; Edge numbers are all 1.
+;; Top number is 1.
+;; Numbers inside are the sum of the two numbers above.
+;;
+;;               1
+;;             1   1
+;;           1   2   1
+;;         1   3   3   1
+;;       1   4   6   4   1
+;;     1   5  10   10  5   1
+;;
+(define (binomial row col)
+  (cond ((= row 0) 1)
+        ((= col 0) 1)
+        ((= row col) 1)
+        (else
+         (+ (binomial (- row 1) (- col 1))
+            (binomial (- row 1) col)))))
+
+(check-me binomial 
+          '((10 5) . 252)
+          '((10 1) . 10)
+          '((6 2)  . 15)
+          '((49 6) . 13983816))
 
 
 
