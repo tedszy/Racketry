@@ -53,7 +53,6 @@
 ;;   + [1, penny] + [-4, nickel, penny]
 ;;   + [1, null]  + [0, penny] + 0 
 ;;   + 0
-
 ;;
 ;; 0 + 0 + [9, null] + [8, penny]
 ;;   + 0 + [5, null] + [4, penny]
@@ -98,3 +97,13 @@
  
 ;; Exercise 1.15 ========================================
 
+;; Use the the identity sin(x) = 3*sin(x/3) - 4*(sin(x/3))^3
+;; and the base case sin(x) = x (!) when x is small enough.
+(define (my-sine x)
+  (define (cube x) (* x x x))
+  (define (p x)
+    (- (* 3 x)
+       (* 4 (cube x))))
+  (if (<= (abs x) 0.1)
+      x
+      (p (my-sine (/ x 3.0)))))
