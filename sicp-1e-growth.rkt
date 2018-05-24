@@ -97,13 +97,34 @@
  
 ;; Exercise 1.15 ========================================
 
-;; Use the the identity sin(x) = 3*sin(x/3) - 4*(sin(x/3))^3
+;; Use the the identity sin
+;;
+;; (x) = 3*sin(x/3) - 4*(sin(x/3))^3
+;;
 ;; and the base case sin(x) = x (!) when x is small enough.
+;;
+;; How does this work? A large polynomial expression
+;; is formed by recursion, and it gets evaluated once
+;; my-sine is small enough to be replaced with x.
+;; Then the expression can be evaluated.
 (define (my-sine x)
-  (define (cube x) (* x x x))
-  (define (p x)
-    (- (* 3 x)
-       (* 4 (cube x))))
+  (define (poly x) (- (* 3 x) (* 4 (* x x x))))
   (if (<= (abs x) 0.1)
-      x
-      (p (my-sine (/ x 3.0)))))
+      (begin (displayln x)
+             x)
+      (begin (displayln x)
+             (poly (my-sine (/ x 3.0))))))
+
+;; (my-sine 12.15) ==> 7 steps.
+;; 12.15
+;; 4.05
+;; 1.3499999999999999
+;; 0.44999999999999996
+;; 0.15
+;; 0.049999999999999996
+;;-0.39980345741334
+;;
+;; Order of growth in steps seems to be Theta(log x).
+;; Order of growth in space maybe Theta(2^(log x)) 
+;; or just Theta(x).
+
