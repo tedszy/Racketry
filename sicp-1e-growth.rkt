@@ -107,23 +107,25 @@
 ;; is formed by recursion, and it gets evaluated once
 ;; my-sine is small enough to be replaced with x.
 ;; Then the expression can be evaluated.
-(define (my-sine x)
+(define (my-sine x step table)
   (define (poly x) (- (* 3 x) (* 4 (* x x x))))
   (if (<= (abs x) 0.1)
-      (begin (displayln x)
-             x)
-      (begin (displayln x)
-             (poly (my-sine (/ x 3.0))))))
+      x
+      (poly (my-sine (/ x 3.0)
+                     (+ step 1)
+                     (cons (list (number->string (+ step 1))
+                                 "==>"
+                                 (number->string x))
+                           table)))))
 
-;; (my-sine 12.15) ==> 7 steps.
-;; 12.15
-;; 4.05
-;; 1.3499999999999999
-;; 0.44999999999999996
-;; 0.15
-;; 0.049999999999999996
-;;-0.39980345741334
-;;
+;; (my-sine 12.15 0 '())
+;; 1 | ==> |                12.15
+;; 2 | ==> |                 4.05
+;; 3 | ==> |   1.3499999999999999
+;; 4 | ==> |  0.44999999999999996
+;; 5 | ==> |                 0.15
+;; 6 | ==> | 0.049999999999999996
+;; -0.39980345741334
 ;; Order of growth in steps seems to be Theta(log x).
 ;; Order of growth in space maybe Theta(2^(log x)) 
 ;; or just Theta(x).
