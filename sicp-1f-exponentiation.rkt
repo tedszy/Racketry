@@ -135,19 +135,24 @@
  
 ;; Exercise 1.19 ========================================
 
-;; Fibonacci numbers in Theta(log(n)) steps.
-
-;; Fibonacci T transformation and generalized Tpq transformation.
-
-; T.(a,b) = (a + b, a)
-
-; Tpq.(a,b) = (bq + aq + ap, bp + aq)
-
-; Tpq.Tpq.(a, b) = (bq' + aq' + ap', bp' + aq')
-
-; where p' = p^2 + q^2 and q' = q^2 + 2pq.
-
-; You get Fibonacci numbers when Tpq = T01, p=0, q=1
+;; Computing Fibonacci numbers in Theta(log(n)) steps.
+;;
+;; Fibonacci transformation F and generalized Tpq transformation.
+;;
+;; Fibonacci transform F.(a,b) = (a + b, a). This can be obtained
+;; from a generalized transform
+;;
+;;    Tpq.(a,b) = (bq + aq + ap, bp + aq)
+;;
+;; Find composition of Tpq.Tpq (dot means "applied to".)
+;;
+;;    Tpq.Tpq.(a, b) = (bq' + aq' + ap', bp' + aq')
+;;    where p' = p^2 + q^2 and q' = q^2 + 2pq.
+;;
+;; With the above formula we can do successive squaring
+;; like fast-exponentiation. That's the point of T and T^2.
+;;
+;; You get Fibonacci transform F = T01 when p=0, q=1.
 (define (fibT a b count)
   (if (= count 0)
       b
@@ -162,6 +167,41 @@
               (+ (* b q) (* a q) (* a p))  
               (+ (* b p) (* a q))
               (- count 1))))
+
+;; -- refactored --------------------------------------------
+
+;; Let's implement the generalized transform
+;;
+;;    Tpq.(a,b) = (bq + aq + ap, bp + aq)
+;;
+;; as a closure over p, q that is applied to
+;; initial values a, b. It has to return two
+;; values, so let's get some practice using 
+;; multiple-values in Racket. We may want to 
+;; use this in the "inside-out" article, which 
+;; is about the relationships between multiple
+;; values and multiple or higher-order recursion.
+(define (T p q)
+  (lambda (a b)
+    (values (+ (* b q) (* a q) (* a p))
+            (+ (* b p) (* a q)))))
+
+;; Racket's compose works on multiple-valued functions,
+;; so try this, it's beautiful!
+;; > (define F (T 0 1))    ;; Define the Fibonacci transform.
+;; > ((compose F F F) 1 1) ;; Apply it repeatedly!
+;; 5
+;; 3
+;; Gives Fibonacci(5). Because we start with Fibonacci(1) and Fibonacci(2), 
+;; then three calls of F transformation gives Fibonacci(5).
+
+;; We may need this...
+;; > (call-with-values (lambda () (values 1 1) F))
+;; 2
+;; 1
+
+;; -----------------------------------------------------
+
 
 ; it works!
 (define (TFibonacci n)
