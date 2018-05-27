@@ -41,6 +41,7 @@
 ;; (even n) b^n = (b^(n/2))^2
 ;; (odd  n) b^n = b^1 * b^(n-1)
 ;;
+;; Steps grow as Theta(log(n)).
 (define (expo3 b n)
   (define (square x) (* x x))
   (cond ((= n 0)
@@ -54,7 +55,37 @@
 
 ;; Exercise 1.16 ========================================
 
+;; Iterative (tail recursive) version of fast exponentiation.
+;; Use an extra state variable that accumulates the answer,
+;; such that a*b^n 9s always the same. Since a starts at 1,
+;; the combination a*b^n = b0^n0 at every step. When
+;; the computation terminates, n=0 and b^n is 1, meaning
+;; that a=b0^n0 now.
+;;
+;; Use [b^(n/2)]^2 = [b^2]^(n/2)
+;;
+;; To reduce the size of n when n is even.
+(define (expo4 b n)
+  (define (square x) (* x x))
+  (let loop ((b b) (n n) (a 1))
+    (cond ((= n 0)
+           a)
+          ((odd? n)
+           (loop b 
+                 (sub1 n) 
+                 (* b a)))
+          (else
+           ;; Note that this only makes n smaller.
+           ;; There's no actual "computation"! We
+           ;; are instead increasing the size of b
+           ;; and decreasing n!
+           (loop (square b) 
+                 (/ n 2) 
+                 a)))))
  
+;; Beautiful idea!
+
+
 ;; Exercise 1.17 ========================================
 
 
