@@ -88,6 +88,49 @@
 
 ;; Exercise 1.17 ========================================
 
+;; If we replace multiplication by addition in
+;; the above "expo" functions, we end up with
+;; multiplication rather than exponentiation.
+;;
+;;    *        ==> +
+;;    squaring ==> doubling
+;;    expo     ==> mul
+;;
+;; The basic idea:
+(define (mul1 a b)
+  (if (= b 1) ;; Seems to be a typo in SICP here.
+      a
+      (+ a (mul1 a (- b 1)))))
+
+;; Analogous to fast-exponentiation
+;; but with tree recursive growth.
+(define (mul2 a b)
+  (define (double x) (+ x x))
+  (cond ((= b 1)
+         a)
+        ((odd? b)
+         (+ a (mul2 a (sub1 b))))
+        (else
+         (double (mul2 a (/ b 2))))))
+
+;; Now the analog of the iterative (tail recursive)
+;; fast-exponentiation. Iterative fast-multiplication,
+;; using only additions.
+;;
+;; Here the invariant is u + ab where u starts at 0.
+;; And ends with ab=0 and u being the answer.
+;; Change b=>a n=>b a=>u in expo4, etc.
+(define (mul3 a b)
+  (define (double x) (+ x x))
+  (let loop ((a a) (b b) (u 0))
+    (cond ((= b 0)
+           u)
+          ((odd? b)
+           (loop a (sub1 b) (+ a u)))
+          (else
+           (loop (double a) (/ b 2) u)))))
+
+
 
 ;; Exercise 1.18 ========================================
 
