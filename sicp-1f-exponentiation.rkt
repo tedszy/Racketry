@@ -137,5 +137,52 @@
 
 ;; Fibonacci numbers in Theta(log(n)) steps.
 
+;; Fibonacci T transformation and generalized Tpq transformation.
+
+; T.(a,b) = (a + b, a)
+
+; Tpq.(a,b) = (bq + aq + ap, bp + aq)
+
+; Tpq.Tpq.(a, b) = (bq' + aq' + ap', bp' + aq')
+
+; where p' = p^2 + q^2 and q' = q^2 + 2pq.
+
+; You get Fibonacci numbers when Tpq = T01, p=0, q=1
+(define (fibT a b count)
+  (if (= count 0)
+      b
+      (fibT b (+ a b) (- count 1))))
+
+; this works. (fibTpq 0 1 1 0 10) ==> 55.
+(define (fibTpq p q a b count)
+  (if (= count 0)
+      b
+      (fibTpq p 
+              q 
+              (+ (* b q) (* a q) (* a p))  
+              (+ (* b p) (* a q))
+              (- count 1))))
+
+; it works!
+(define (TFibonacci n)
+  (fibTpq-iter 0 1 1 0 n))
+(define (fibTpq-iter p q a b count)
+  (cond ((= count 0)
+         b)
+        ((even? count)
+         (fibTpq-iter (+ (* p p) (* q q))
+                      (+ (* q q) (* 2 p q))
+                      a
+                      b 
+                      (/ count 2)))
+        (else 
+         (fibTpq-iter p
+                      q
+                      (+ (* b q) (* a q) (* a p))  
+                      (+ (* b p) (* a q))
+                      (- count 1)))))
+
+
+
 
 
