@@ -86,7 +86,7 @@
 ;; Beautiful idea!
 
 
-;; Exercise 1.17 ========================================
+;; Exercise 1.17 and 1.18 ========================================
 
 ;; If we replace multiplication by addition in
 ;; the above "expo" functions, we end up with
@@ -103,7 +103,8 @@
       (+ a (mul1 a (- b 1)))))
 
 ;; Analogous to fast-exponentiation
-;; but with tree recursive growth.
+;; with tree recursive growth and 
+;; Theta(log(n)) steps.
 (define (mul2 a b)
   (define (double x) (+ x x))
   (cond ((= b 1)
@@ -120,6 +121,7 @@
 ;; Here the invariant is u + ab where u starts at 0.
 ;; And ends with ab=0 and u being the answer.
 ;; Change b=>a n=>b a=>u in expo4, etc.
+;; Theta(log(n)) steps and Theta(1) in space.
 (define (mul3 a b)
   (define (double x) (+ x x))
   (let loop ((a a) (b b) (u 0))
@@ -130,14 +132,10 @@
           (else
            (loop (double a) (/ b 2) u)))))
 
-
-
-;; Exercise 1.18 ========================================
-
  
 ;; Exercise 1.19 ========================================
 
-
+;; Fibonacci numbers in Theta(log(n)) steps.
 
 
 
