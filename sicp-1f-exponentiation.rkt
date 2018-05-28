@@ -144,84 +144,138 @@
 ;;
 ;;    Tpq.(a,b) = (bq + aq + ap, bp + aq)
 ;;
+;; You get Fibonacci transform F = T01 when p=0, q=1.
+;;
 ;; Find composition of Tpq.Tpq (dot means "applied to".)
 ;;
 ;;    Tpq.Tpq.(a, b) = (bq' + aq' + ap', bp' + aq')
 ;;    where p' = p^2 + q^2 and q' = q^2 + 2pq.
 ;;
 ;; With the above formula we can do successive squaring
-;; like fast-exponentiation. That's the point of T and T^2.
+;; like fast-exponentiation. How does this work exactly?
+;; The transrformation p->p`, q->q' changes n applications
+;; of T to 2n applications of T. 
 ;;
-;; You get Fibonacci transform F = T01 when p=0, q=1.
-(define (fibT a b count)
-  (if (= count 0)
-      b
-      (fibT b (+ a b) (- count 1))))
-
-; this works. (fibTpq 0 1 1 0 10) ==> 55.
-(define (fibTpq p q a b count)
-  (if (= count 0)
-      b
-      (fibTpq p 
-              q 
-              (+ (* b q) (* a q) (* a p))  
-              (+ (* b p) (* a q))
-              (- count 1))))
-
-;; -- refactored --------------------------------------------
-
-;; Let's implement the generalized transform
+;;   p    = 0,             q    = 1                ==> F(1) ==> F
+;;   p'   = p^2 + q^2 = 1  q'   = q^2 + 2*p*q = 1  ==> F(2) ==> F^2
+;;   p''  = 2              q''  = 3                ==> F(4) ==> F^4
+;;   p''' = 13             q''' = 21               ==> F(8) ==> F^8
+;;
+;; These p,q are themselves Fibonacci numbers. Let's see them
+;; in action by using a closure to create these operators 
+;; corresponding to p, q.
 ;;
 ;;    Tpq.(a,b) = (bq + aq + ap, bp + aq)
 ;;
-;; as a closure over p, q that is applied to
-;; initial values a, b. It has to return two
-;; values, so let's get some practice using 
-;; multiple-values in Racket. We may want to 
-;; use this in the "inside-out" article, which 
-;; is about the relationships between multiple
-;; values and multiple or higher-order recursion.
+;; Use Racket's multiple-values.
 (define (T p q)
   (lambda (a b)
     (values (+ (* b q) (* a q) (* a p))
             (+ (* b p) (* a q)))))
 
-;; Racket's compose works on multiple-valued functions,
-;; so try this, it's beautiful!
-;; > (define F (T 0 1))    ;; Define the Fibonacci transform.
-;; > ((compose F F F) 1 1) ;; Apply it repeatedly!
-;; 5
-;; 3
-;; Gives Fibonacci(5). Because we start with Fibonacci(1) and Fibonacci(2), 
-;; then three calls of F transformation gives Fibonacci(5).
+(define F (T 0 1)) 
+(define F^2 (T 1 1))
+(define F^4 (T 2 3))
+(define F^8 (T 13 21))
+;; Some tests.
+;;
+;; (F^4 1 0) ==> 5, 3
+;; ((compose F F F F) 1 0) ==> 5, 3
+;;
+;; (F^8 1 0) => 34, 21
+;; ((compose F^4 F^4) 1 0) ==> 34, 21 (!)
+;;
+;; ﻿((compose F^8 F^8) 1 0) ==> 1597, 987
+;; You can see how large F(n) can be computed this way.
+;;
+;; Solve the SICP problem before going off into any more variations.
+;; Tpq applied n times to (a, b) pair.
+;; (fibTpq 0 1 1 0 10) ==> 55 = F(10).
+(define (Tpq-power-n p q a b n)
+  (if (= n 0)
+      b
+      (Tpq-power-n  p 
+                    q 
+                    (+ (* b q) (* a q) (* a p))  
+                    (+ (* b p) (* a q))
+                    (- n 1))))
 
-;; We may need this...
-;; > (call-with-values (lambda () (values 1 1) F))
-;; 2
-;; 1
-
-;; -----------------------------------------------------
-
-
-; it works!
+;; Now we want to do same, but with successive squaring
+;; to get Theta(log(n)) performance.
+;; (TFibonacci 10) ==> 55
+;; (TFibonacci 500) ==> 139423224561697880139724382870407283950070256587697307264108962948325571622863290691557658876222521294125
 (define (TFibonacci n)
-  (fibTpq-iter 0 1 1 0 n))
-(define (fibTpq-iter p q a b count)
-  (cond ((= count 0)
-         b)
-        ((even? count)
-         (fibTpq-iter (+ (* p p) (* q q))
-                      (+ (* q q) (* 2 p q))
-                      a
-                      b 
-                      (/ count 2)))
-        (else 
-         (fibTpq-iter p
-                      q
-                      (+ (* b q) (* a q) (* a p))  
-                      (+ (* b p) (* a q))
-                      (- count 1)))))
+  (let loop ((p 0) (q 1) (a 1) (b 0) (n n))
+    (cond ((= n 0)
+           b)
+          ((even? n)
+           (loop (+ (* p p) (* q q))
+                 (+ (* q q) (* 2 p q))
+                 a
+                 b 
+                 (/ n 2)))
+          (else 
+           (loop p
+                 q
+                 (+ (* b q) (* a q) (* a p))  
+                 (+ (* b p) (* a q))
+                 (- n 1))))))
 
+;; The magic is more clear if we use matrices. 
+;; This transformation:
+;;
+;;    Tpq.(a,b) = (bq + aq + ap, bp + aq)
+;;              = (b*q + a(p+q), bp + aq)
+;;
+;; can be written as:
+;;
+;;   Tpq.(a,b) =  [ p+q  q ] [a]
+;;                [  q   p ] [b]
+;;
+;; Let's square the Tpq matrix:
+;;
+;;   [ p+q q ] [ p+q q ] = [ (p+q)^2 + q^2   q*(p+q) + p*q ]
+;;   [  q  p ] [  q  p ]   [ q*(p+q) + p*q   q^2 + p^2     ]
+;;
+;; This can be written in the form 
+;;
+;;   [ p'+q' q' ]  = T'
+;;   [   q'  p' ]
+;;
+;; if we choose (look at second row) the new q' and p' to be...
+;;
+;;   p' = p^2 + q^2,   q' = q^2 + 2*p*q
+;;
+;; With these we can see how the new elements work out perfectly:
+;;
+;; T'(2,1) = q' = q*p+q^2+p*q = q^2 + 2*p*q
+;; T'(2,2) = p' = p^2 + q^2
+;; T'(1,1) = p'+q' = p^2 + q^2 + q^2 + 2*p*q = (p+q)^2 + q^2 (!)
+;;
+;; Beautiful!!
+;;
+;; So let's write a matrix version of the Theta(n) and 
+;; Theta(log(n)) Fibonacci computations. Represent a 
+;; 2x2 matrix as a list of 4 elements and use Racket's 
+;; match-let to access them.
+;;
+;; Matrix multiplication.
+(define (mat* A B)
+  (match-let (((list a b c d) A)
+              ((list e f g h) B))
+    (list (+ (* a e) (* b g)) (+ (* a f) (* b h))
+          (+ (* c e) (* d g)) (+ (* c f) (* d h)))))
+
+;; The simple, Theta(n) steps algorithm.
+;; Done with matrices.
+(define (Tn n)
+  (let loop ((result (list 1 1 1 0)) (n n))
+    (if (= n 1)
+        result  ;; A * [1,0]
+        (loop  (mat* (list 1 1 1 0) result)
+               (sub1 n)))))
+
+;; Tests. (multiply by (1, 0)). Explain the SICP convention a,b.
 
 
 
