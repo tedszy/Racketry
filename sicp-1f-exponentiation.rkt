@@ -271,12 +271,42 @@
 (define (Tn n)
   (let loop ((result (list 1 1 1 0)) (n n))
     (if (= n 1)
-        result  ;; A * [1,0]
+        result  ;; A * [1,0], first column.
         (loop  (mat* (list 1 1 1 0) result)
                (sub1 n)))))
 
-;; Tests. (multiply by (1, 0)). Explain the SICP convention a,b.
+;; (Tn 10) ==> (89 55 55 34) multiply by (1,0) ==> (89, 55) ==> 55.
 
 
+;; Starting conditions.
+;;
+;;    0 1 1 2 3 5 8 13 21 35 55 ...
+;;    b a
+;;    p q
+;; 
+;;    Therefore, T = (1 1 1 0) 
+;;
+;; In all the Fibonacci codes, SICP takes 'a' to be the
+;; bigger of the pair a,b of Fibonacci numbers. We should
+;; label a and b the other way around to be consistent.
+;; We can do this later.
+;; 
+;; Gives the right answer, just in a funny place: Result(2,2).
+(define (Tn1 n)
+  (let loop ((T (list 1 1 1 0)) (result (list 1 1 1 0)) (n n))
+    (cond ((= n 0)
+           result)
+          ((even? n)
+           (loop (mat* T T)
+                 result
+                 (/ n 2)))
+          (else 
+           (loop T
+                 (mat* T result)
+                 (sub1 n))))))
 
+;; Finally if we hard-code the matrix elements 
+;; as state variables to a function Tn3, we get 
+;; back code that's like the SICP version.
+;;
 
