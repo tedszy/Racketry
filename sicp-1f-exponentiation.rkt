@@ -351,4 +351,34 @@
 ;; And since it is not necessary to carry a,b,c,d when only p and q
 ;; will do (since a=p+q, b=q, c=q, d=p) that's why the SICP version
 ;; has two less state variables!.
+;;
+;; One more Fibonacci variation! Let's define the T 
+;; transformation as function, and then use composition 
+;; of functions  as the "squaring" part. In the process 
+;; we'll use multiple values, call-with-values and a 
+;; peculiar kind of recursion -- where one of the state 
+;; variables is a function!
+;;
+;;    0 1 1 2 3 5 8 ....
+;;    a b
+;;    T(a,b) = (b, a+b)
+;;
+(define (Tn-functional n)
+  (let loop ((T (lambda (a b) 
+                  (values b (+ a b))))
+             (a 0)
+             (b 1)
+             (n n))
+    (cond ((= n 0)
+           (values a b))
+          ((even? n)
+           (loop (compose T T)
+                 a
+                 b
+                 (/ n 2)))
+          (else
+           (call-with-values (lambda () 
+                               (T a b))
+                             (lambda (u v)
+                               (loop T u v (sub1 n))))))))
 
