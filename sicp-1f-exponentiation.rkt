@@ -266,47 +266,89 @@
     (list (+ (* a e) (* b g)) (+ (* a f) (* b h))
           (+ (* c e) (* d g)) (+ (* c f) (* d h)))))
 
-;; The simple, Theta(n) steps algorithm.
-;; Done with matrices.
-(define (Tn n)
-  (let loop ((result (list 1 1 1 0)) (n n))
-    (if (= n 1)
-        result  ;; A * [1,0], first column.
-        (loop  (mat* (list 1 1 1 0) result)
-               (sub1 n)))))
-
-;; (Tn 10) ==> (89 55 55 34) multiply by (1,0) ==> (89, 55) ==> 55.
-
-
 ;; Starting conditions.
 ;;
 ;;    0 1 1 2 3 5 8 13 21 35 55 ...
 ;;    b a
 ;;    p q
 ;; 
-;;    Therefore, T = (1 1 1 0) 
+;;    Therefore, T = [ 1 1 ] 
+;;                   [ 1 0 ]
 ;;
-;; In all the Fibonacci codes, SICP takes 'a' to be the
-;; bigger of the pair a,b of Fibonacci numbers. We should
-;; label a and b the other way around to be consistent.
-;; We can do this later.
-;; 
-;; Gives the right answer, just in a funny place: Result(2,2).
-(define (Tn1 n)
-  (let loop ((T (list 1 1 1 0)) (result (list 1 1 1 0)) (n n))
+;;    Beginning with [ 1 ]  F(1)
+;;                   [ 0 ]  F(0)
+;;
+;;   [ 1 1 ] [ 1 ] = [ 1 ]  F(2)
+;;   [ 1 0 ] [ 0 ]   [ 1 ]  F(1)
+;;
+;;   [ 1 1 ] [ 1 1 ] [ 1 ] = [ 1 1 ] [ 1 ] = [ 2 ]  F(3)
+;;   [ 1 0 ] [ 1 0 ] [ 0 ]   [ 1 0 ] [ 1 ]   [ 1 ]  F(2)
+;;
+;;   T.T.T. [ 1 ] = [ 1 1 ] [ 2 ] = [ 3 ]  F(4)
+;;          [ 0 ]   [ 1 0 ] [ 1 ]   [ 2 ]  F(3)
+;;
+;; See how it works? 
+;;
+;;   (T^n).[ 1 ] = [ F(n+1) ]
+;;         [ 0 ]   [ F(n)   ]
+;;
+;; Whereas we infer...
+;;
+;;   T^n = [ F(n+1) F(n)   ]
+;;         [ F(n)   F(n-1) ]
+;;
+;; And so, the simple, Theta(n) steps algorithm.
+;; Done with matrices.
+(define (Tn n)
+  (let loop ((result (list 1 1 1 0)) (n n))
+    (if (= n 1)
+        result
+        (loop  (mat* (list 1 1 1 0) result)
+               (sub1 n)))))
+
+;; (Tn 10) ==> (89 55 55 34) ==> [ 89 55 ] = [ F(11) F(10) ]
+;;                               [ 55 34 ]   [ F(10) F(9)  ]
+;;
+;; As expected. Note we don't actually use the initial vector (1,0).
+
+;; Finally if we hard-code the matrix elements as state variables 
+;; to a function, and put in the initial vector (1,0), we get code 
+;; that's like the SICP version.
+;;
+;; a, b, c, d are the elements of the T matrices: [ a b ]
+;;                                                [ c d ]
+;; starting off as [ 1 1 ]
+;;                 [ 1 0 ]
+;;
+;; u,v are the elements of the vector that starts off as [ 1 ].
+;;                                                       [ 0 ]
+(define (Tn-fast n)
+  (let loop ((a 1) (b 1) (c 1) (d 0) (u 1) (v 0) (n n))
     (cond ((= n 0)
-           result)
+           v)
           ((even? n)
-           (loop (mat* T T)
-                 result
+           (loop (+ (* a a) (* b c)) ;; simple matrix squaring.
+                 (+ (* a b) (* b d))
+                 (+ (* a c) (* c d))
+                 (+ (* b c) (* d d))
+                 u
+                 v
                  (/ n 2)))
-          (else 
-           (loop T
-                 (mat* T result)
+          (else
+           (loop a
+                 b
+                 c
+                 d
+                 (+ (* a u) (* b v)) ;; matrix times vector.
+                 (+ (* c u) (* d v))
                  (sub1 n))))))
 
-;; Finally if we hard-code the matrix elements 
-;; as state variables to a function Tn3, we get 
-;; back code that's like the SICP version.
+;; (Tn-fast 10)
+;; 55
+;; (Tn-fast 500)
+;; 139423224561697880139724382870407283950070256587697307264108962948325571622863290691557658876222521294125
 ;;
+;; And since it is not necessary to carry a,b,c,d when only p and q
+;; will do (since a=p+q, b=q, c=q, d=p) that's why the SICP version
+;; has two less state variables!.
 
