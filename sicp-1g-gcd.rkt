@@ -45,8 +45,52 @@
 ;; 
 ;; so log(n) >= k * some constant.
 ;; Therefore gcd steps, k, grows like Theta(log(n)).
+;;
+;; Proof of Lame's theorem.
+;;
+;; Consider this table and label the sequence
+;; (a_(k+1_,b_(k+1)) -> (a_k,b_k) -> (a_(k-1), b_(k-1))
+;;
+;; (gcd1 2998 191)
+;;
+;;   m           q    d            r
+;; ---------------------------------
+;; 2998 a_(k+1) 15  191 b_(k+1)  133
+;;  191 a_k      1  133 b_k       58
+;;  133 a_(k-1)  2   58 b_(k-1)   17
+;;   58          3   17            7
+;;   17          2    7            3
+;;    7          2    3            1
+;;    3          3    1            0
+;; 
+;; Notice that
+;;
+;;   191     >= 133 + 58
+;;   b_(k+1) >= b_k + b_(k-1).
+;;
+;; Go down the list of divisors and you can see 
+;; that this inequality seems to be always true.
+;; So let's prove that it is always true.
+;;
+;; From the way the GCD algorithm table is organized 
+;; we see that 
+;;
+;;   (1) a_(k-1) = b_k and a_k = b_(k+1).
+;;
+;;   (2) b_(k-1) = remainder(a_k, b_k).
+;;
+;; From Euclidean division step k.
+;;
+;;   a_k     = q*b_k + b_(k-1) >= b_k + b_(k-1).
+;;   b_(k+1)                   >= b_k + b_(k-).
+;;
+;; And that's the inequality we wanted. Now, the 
+;; Lame theorem is proved by induction and by
+;; application of the above inequality.
+;;
 
 
+;; Verify that the base case for k=1 is true.
 
 
 
