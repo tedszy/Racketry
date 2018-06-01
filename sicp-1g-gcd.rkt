@@ -85,14 +85,41 @@
 ;;   b_(k+1)                   >= b_k + b_(k-).
 ;;
 ;; And that's the inequality we wanted. Now, the 
-;; Lame theorem is proved by induction and by
-;; application of the above inequality.
+;; Lame theorem 
+;; 
+;;   b_n >= F(n)
 ;;
-
-
+;; is proved by induction and by application 
+;; of the above inequality.
+;;
 ;; Verify that the base case for k=1 is true.
-
-
+;; 
+;;   b >= F(1) = 1. 
+;;
+;; Which is true, since we assume b >= 1.
+;;
+;; Assume strong induction hypotheses, that 
+;;
+;;   b_j >= F(j)
+;;
+;; is true for all values j <= k. We now show
+;; this implies that the case of k+1 is also true.
+;;
+;; By the strong induction hypotheses, 
+;;
+;;   b_(k-1) >= F(k-1) 
+;;   b_k     >= F(k).
+;;
+;; Add them:
+;;
+;;   b_k + b_(k-1) >= F(k) + F(k-1)
+;;                 >= F(k+1).
+;;
+;; But by the inequality we proved earlier, 
+;;
+;;   b_(k+1) >= F(k+1).
+;;
+;; QED. Ta-da!
 
 
 
