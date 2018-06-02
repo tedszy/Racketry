@@ -125,6 +125,58 @@
 
 ;; Exercise 1.20 ========================================
 
+;; Analyze (gcd2 206 40) from the point of veiw of
+;; normal-order evaluation.
+;;
+;; First let's see the Euclidean algorithm table.
+;;
+;;  m  q   d  r
+;; -------------
+;; 206  5  40  6
+;;  40  6   6  4
+;;   6  1   4  2
+;;   4  2   2  0
+;;
+(define (gcd2 a b)
+  (if (= b 0)
+      a 
+      (gcd2 b (remainder a b))))
 
-
+;; First of all, b has to be evaluated in order for the 
+;; recursion to ever end. And if b is evaluated then the 
+;; value of b is known in the expression
+;;
+;;   (gcd2 b (remainder a b)).
+;;
+;; (gcd2 206 40)
+;;
+;; if (= 40 0) => #f
+;;              => (gcd2 40 (remainder 206 40))
+;; if (= (remainder 206 40) 0) => this must be evaluated 
+;;                                 so (remainder 206 40) is known!
+;; if (= 6 0)               => (gcd2 6 (remainder 6 4))
+;; if (= (remainder 6 4) 0) => 
+;; if (= 2 0)               => (gcd2 4 (remainder 4 2))
+;; if (= (remainder 4 2) 0) => this has to get evaluated!
+;; if (= 0 0) => a, which is now 2.
+;; 2.
+;;
+;; How about applicative-order evaluation? It's similar,
+;; but the remainder function calls are evaluated before
+;; they are passed to the if-expression.
+;;
+;; (gcd2 206 40)
+;; if (= 40 0) => (gcd2 40 (rem 206 40)) => (gcd2 40 6)
+;; if (= 6 0)  => (gcd2 6 (rem 40 6))    => (gcd2 6 4)
+;; if (= 4 0)  => (gcd2 4 (rem 6 4))     => (gcd2 4 2)
+;; if (= 2 0)  => (gcd2 2 (rem 4 2))     => (gcd2 2 0)
+;; if (= 0 0)  => 2
+;;
+;; I've seen solutions to this problem where the normal-order
+;; evaluation ends up to be some long sequence of nested calls
+;; to remainder function. I dispute this though: the value
+;; of 'b' has to always be known before the recusive call to
+;; gcd2. The function call to remainder is deferred, but it
+;; does not build up into a long chain of nested calls. So my 
+;; answer to 1.20 differs from what you may find elsewhere.
 
