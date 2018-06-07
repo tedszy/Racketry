@@ -111,9 +111,9 @@
 
 ;; Exercise 1.21 ========================================
 
-(displayln (get-smallest-divisor 199))
-(displayln (get-smallest-divisor 1999))
-(displayln (get-smallest-divisor 19999))
+;; (get-smallest-divisor 199)   ==> 199
+;; (get-smallest-divisor 1999)  ==> 1999
+;; (get-smallest-divisor 19999) ==> 7
 
 
 
@@ -138,6 +138,70 @@
 ;; (timed-prime? 64111111111111)
 ;; *** prime: 113 milliseconds.
 ;; #t
+
+;; Find first 3 primes above N = 1000, 10,000, 100,000, 1,000,000.
+;; Test the hypothesis that this procedure is Theta(sqrt(n)).
+;; Higher N times should be about sqrt(10) times longer than 
+;; lower N times.
+;;
+;; Computers are a lot faster these days so we must use much
+;; larger N to get measurable milliseconds:
+;;
+;;   N = 10^11, 10^12, 10^13.
+;;
+;; Refactor this problem and the SICP code to work with simple-table.
+(define (first-three-primes-larger-than N)
+  (let loop ((N (add1 N)) 
+             (count 0) 
+             (start-time (current-milliseconds))
+             (result '()))
+    (cond ((= count 3)
+           (reverse result))
+          ((prime? N)
+           (loop (add1 N)
+                 (add1 count)
+                 (current-milliseconds)
+                 (cons (list N (- (current-milliseconds) start-time))
+                       result)))
+          (else
+           (loop (add1 N)
+                 count
+                 (current-milliseconds)
+                 result)))))
+
+;; Aggregate the results into a table.
+;; 
+;;   limit       primes       milliseconds
+;;
+(define (prime-time-table)
+  (print-table #:bars true #:head true
+   (cons (list "lower limit" "primes" "msecs")
+         (map (lambda (N)
+                (let ((row (first-three-primes-larger-than N)))
+                  (list
+                   (number->string N)
+                   (string-join (map (lambda (u)
+                                       (number->string (car u)))
+                                     row)
+                                ", ")
+                   (number->string (apply + (map cadr row))))))
+              (map (lambda (e) 
+                     (expt 10 e)) 
+                   (list 11 12 13))))))
+
+;; (prime-time-table)
+;;    lower limit                                           primes   msecs
+;; -----------------------------------------------------------------------
+;;   100000000000 |       100000000003, 100000000019, 100000000057 |    27
+;;  1000000000000 |    1000000000039, 1000000000061, 1000000000063 |    88
+;; 10000000000000 | 10000000000037, 10000000000051, 10000000000099 |   282
+;;
+;; Now, sqrt(10) ~ 3.16 and we see...
+;;
+;;    27 * 3.16 = 85.32
+;;    88 * 3.16 = 278.0
+;;
+;; which are very close to the observed times!
 
 
 
