@@ -119,7 +119,25 @@
 
 ;; Exercise 1.22 ========================================
 
+;; We dont have 'runtime' in Racket but we do have 'time'
+;; and 'current-milliseconds'.
 
+(define (timed-prime? q)
+  (let ((t1 (current-milliseconds)))
+    (if (prime? q)
+        (begin
+          (displayln
+           (string-join
+            (list "*** prime:"
+                  (number->string (- (current-milliseconds)
+                                     t1))
+                  "milliseconds.")))
+          true)
+        false)))
+
+;; (timed-prime? 64111111111111)
+;; *** prime: 113 milliseconds.
+;; #t
 
 
 
