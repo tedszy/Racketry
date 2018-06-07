@@ -87,10 +87,35 @@
 (check-equal? (mod-expt 640 29) (expmod 640 29 29))
 (check-equal? (mod-expt 110 100) (expmod 110 100 100))
 
+;; Choose a random base a and do the test a^q = a mod q.
+(define (fermat-test q)
+  (let ((a (add1 (random (sub1 q)))))
+    (= (mod-expt a q) a)))
 
+;; Do the FLT test a certain number of times. If q passes
+;; all these tests it is probably a prime, but if q fails
+;; it is for sure not prime.
+(define (flt-prime? q trials)
+  (cond ((= trials 0)
+         true)
+        ((fermat-test q)
+         (flt-prime? q (sub1 trials)))
+        (else
+         false)))
 
+;; Charmicheal numbers fool the FLT test.
+;; If q is a Charmichael number then
+;;
+;;    a^q = a mod q for all a < q.
+;;
 
 ;; Exercise 1.21 ========================================
+
+
+
+
+
+
 
 ;; Exercise 1.22 ========================================
 
