@@ -111,13 +111,17 @@
 
 ;; Exercise 1.21 ========================================
 
-
-
-
+(displayln (get-smallest-divisor 199))
+(displayln (get-smallest-divisor 1999))
+(displayln (get-smallest-divisor 19999))
 
 
 
 ;; Exercise 1.22 ========================================
+
+
+
+
 
 ;; Exercise 1.23 ========================================
 
