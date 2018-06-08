@@ -149,22 +149,28 @@
 ;;
 ;;   N = 10^11, 10^12, 10^13.
 ;;
-;; Refactor this problem and the SICP code to work with simple-table.
+;; SICP wants me to skip over even numbers since they 
+;; cannot be prime. Also, we want to refactor this problem 
+;; in such a way as to work with simple-table:
+;;
+;; (first-three-primes-larger-than (expt 10 12))
+;; ==> '((1000000000039 33) (1000000000061 29) (1000000000063 29))
+;; Gives a list of the found primes and their computation times.
 (define (first-three-primes-larger-than N)
-  (let loop ((N (add1 N)) 
+  (let loop ((N (if (even? N) (add1 N) (+ N 2))) 
              (count 0) 
              (start-time (current-milliseconds))
              (result '()))
     (cond ((= count 3)
            (reverse result))
           ((prime? N)
-           (loop (add1 N)
+           (loop (+ N 2)
                  (add1 count)
                  (current-milliseconds)
                  (cons (list N (- (current-milliseconds) start-time))
                        result)))
           (else
-           (loop (add1 N)
+           (loop (+ N 2)
                  count
                  (current-milliseconds)
                  result)))))
@@ -173,33 +179,40 @@
 ;; 
 ;;   limit       primes       milliseconds
 ;;
-(define (prime-time-table)
+(define (prime-time-table limit-list)
   (print-table #:bars true #:head true
-   (cons (list "lower limit" "primes" "msecs")
-         (map (lambda (N)
-                (let ((row (first-three-primes-larger-than N)))
-                  (list
-                   (number->string N)
-                   (string-join (map (lambda (u)
-                                       (number->string (car u)))
-                                     row)
-                                ", ")
-                   (number->string (apply + (map cadr row))))))
-              (map (lambda (e) 
-                     (expt 10 e)) 
-                   (list 11 12 13))))))
+               (cons (list "lower limit" "primes" "msecs")
+                     (map (lambda (N)
+                            (let ((row (first-three-primes-larger-than N)))
+                              (list
+                               (number->string N)
+                               (string-join (map (lambda (u)
+                                                   (number->string (car u)))
+                                                 row)
+                                            ", ")
+                               (number->string (apply + (map cadr row))))))
+                          limit-list))))
 
-;; (prime-time-table)
-;;    lower limit                                           primes   msecs
-;; -----------------------------------------------------------------------
-;;   100000000000 |       100000000003, 100000000019, 100000000057 |    27
-;;  1000000000000 |    1000000000039, 1000000000061, 1000000000063 |    88
-;; 10000000000000 | 10000000000037, 10000000000051, 10000000000099 |   282
+(define *limit-list* 
+  (map (lambda (e) 
+         (expt 10 e))
+       (list 10 11 12 13 14)))
+
+;; (prime-time-table *limit-list*)
+;;     lower limit                                              primes   msecs
+;; ---------------------------------------------------------------------------
+;;     10000000000 |             10000000019, 10000000033, 10000000061 |     9
+;;    100000000000 |          100000000003, 100000000019, 100000000057 |    28
+;;   1000000000000 |       1000000000039, 1000000000061, 1000000000063 |    88
+;;  10000000000000 |    10000000000037, 10000000000051, 10000000000099 |   282
+;; 100000000000000 | 100000000000031, 100000000000067, 100000000000097 |   891
 ;;
 ;; Now, sqrt(10) ~ 3.16 and we see...
-;;
-;;    27 * 3.16 = 85.32
-;;    88 * 3.16 = 278.0
+;;    
+;;      9 * 3.16 =  28.44
+;;     28 * 3.16 =  88.48
+;;     88 * 3.16 = 278.08
+;;    282 * 3.16 = 891.12
 ;;
 ;; which are very close to the observed times!
 
