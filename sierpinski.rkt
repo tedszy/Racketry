@@ -1,11 +1,11 @@
-;; Sierpinski triangle using pict graphics module.
+;; Sierpinski triangle using pict graphics.
 
 #lang racket
 
 (require pict
          math/number-theory)
 
-(define square-size 50)
+(define square-size 4)
 
 ;; > odd-square ==> emacs displays square.
 
@@ -14,7 +14,7 @@
             color))
 
 (define even-square (square square-size "green"))
-(define odd-square (square square-size "red"))
+(define odd-square (square square-size "blue"))
 (define empty-square (square square-size "black"))
 
 ;; Test these squares with hc-append and vc-append.
@@ -46,10 +46,8 @@
 ;; 
 ;; (render-row test-row)
 
-
-;; This won't look good. We need filler
-;; in between the squares that represent t
-;; the elements of Pascal's triangle.
+;; The following won't look good when we render it
+;; to little squares. 
 ;;
 ;;               1
 ;;              1 1
@@ -58,7 +56,10 @@
 ;;           1 4 6 4 1
 ;;         1 5 10 10 5 1
 ;;        1 6 15 20 15 6 1
-
+;;
+;; We need filler in between the 
+;; elements of Pascal's triangle.
+;; Let the filler be zero.
 ;;               1 
 ;;             1 0 1
 ;;           1 0 2 0 1
@@ -71,30 +72,46 @@
 ;;
 ;;   0 0 0 0 0 0 1 0 0 0 0 0 0
 ;;   0 0 0 0 0 1 0 1 0 0 0 0 0
-;;   0 0 0 0 1 0 2 0 1 0 0 0 0
+;;   0 0 0 0 1 0 2 0 1 0 0 0 0  <== 6 - 2 padding
 ;;   0 0 0 1 0 3 0 3 0 1 0 0 0
-;;   0 0 1 0 4 0 6 0 4 0 1 0 0
+;;   0 0 1 0 4 0 6 0 4 0 1 0 0  <== 6 - 4 padding
 ;;   0 1 0 5 0 X 0 X 0 5 0 1 0
 ;;   1 0 6 0 X 0 X 0 X 0 6 0 1
 
-
 ;; Total length of a zero-padded row is 2n+1.
-;; Counting i starts from 0 to 2n+1
-
-;; maybe we can eliminate k because it
-;; can be computed from i ==> k = i/2
-
-;; Even index ==> put in binomial(n, i/2)
-;; Odd index ==> put in 0.
-;; No need to reverse on return since
-;; Pascal triangle rows are symmetrical
-(define (pascal-row-zero-padded n)
-  (let loop ((row '()) (i 0))
-    (if (= i (+ (* 2 n) 1))
+;;
+;; No need to reverse list on return since
+;; rows are symmetrical.
+;;
+;;   (1 0 6 0 15 0 20 0 15 0 6 0 1)
+;; 
+;; 2*6+1 elements.
+;; even ==> cons binomial(n,k/2) on result.
+;; odd  ==> cons 0 on result.
+(define (pascal-row n)
+  (let loop ((row '()) (k 0))
+    (if (= k (+ (* 2 n) 1))
         row
-        (if (even? i)
-            (loop (cons (binomial n (/ i 2)) row)
-                  (+ i 1))
+        (if (even? k)
+            (loop (cons (binomial n (/ k 2)) row)
+                  (+ k 1))
             (loop (cons 0 row)
-                  (+ i 1))))))
+                  (+ k 1))))))
 
+;; A table is a list of lists (rows). All rows
+;; are the same length -- padded by zeros on both sides.
+
+(define (make-table n)
+  (let ((table (for/list ((k (+ n 1)))
+                 (let ((zero-padding (make-list (- n k) 0)))
+                   (append zero-padding
+                           (pascal-row k)
+                           zero-padding)))))
+    table))
+
+;; Render the Sierpinski triangle.
+
+;; n = powers of 2 gives perfect results.
+(define (render n)
+  (apply vc-append 
+         (map render-row (make-table n))))
