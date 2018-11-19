@@ -81,7 +81,7 @@
   (colorize (filled-rectangle size size) 
             color))
 
-(define square-size 5)
+(define square-size 2)
 (define even-square (square square-size "green"))
 (define odd-square (square square-size "blue"))
 (define background-square (square square-size "black"))
