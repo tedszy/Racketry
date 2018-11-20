@@ -2,6 +2,17 @@
 
 #lang racket
 
+;; Valid formulas.
+;;
+;; p v ~p
+;; (p -> q) <=> (~p -> ~q)
+;; ((~p -> q) & (~p -> ~q)) -> p
+;; ~(p & q) <=> (~p v ~q)
+;; ((p -> q) & (p -> r)) -> r
+;; ((p & q) -> r) <=> (p -> (q -> r))
+;; ((p & q) & (p -> r)) v ~(p v q) v ~(p -> r)
+
+
 ;; True is Lxy.x. False is Lxy.y. 
 ;; AND is Lxy.xyx or Lxy.xyF
 ;; OR is Lxy.xxy
@@ -41,3 +52,4 @@
 
 (logic-table f)
 (logic-table g)
+
