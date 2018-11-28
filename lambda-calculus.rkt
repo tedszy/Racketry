@@ -114,6 +114,12 @@
          (*or (*not (*or p q))
               (*not (*implies p r))))))
 
+;; (~p xor ~q) <=> ~(p <=> q)
+(define fg/2
+  (lambda (p q)
+    (*iff (*xor (*not p) (*not q))
+          (*not (*iff p q)))))
+
 (newline)
 (display-truth-table (truth-table/1 fa/1)
                      "p v ~p"
@@ -139,5 +145,10 @@
                      "q"
                      "r")
 
+(newline)
+(display-truth-table (truth-table/2 fg/2)
+                     "(~p xor ~q) <=> ~(p <=> q)"
+                     "p"
+                     "q")
 
 
