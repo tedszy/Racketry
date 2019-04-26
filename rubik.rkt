@@ -8,6 +8,44 @@
 
 (provide (all-defined-out))
 
+
+;; Cube setup scheme:
+;;
+;; U=white    L=red      F=green    R=orange   B=blue     D=yellow
+;; UUUUUUUU | LLLLLLLL | FFFFFFFF | RRRRRRRR | BBBBBBBB | DDDDDDDD
+;; wwwwwwww | rrrrrrrr | gggggggg | oooooooo | bbbbbbbb | yyyyyyyy
+;; 1 ---- 8   9 --- 16   17 -- 24   25 -- 32   33 -- 40   41 -- 48
+
+
+(struct cube (facets colors orientation)
+  #:transparent
+  #:methods gen:custom-write
+  ((define (write-proc C o w?)
+     (fprintf o "[ CUBE~n")
+     (fprintf o "~a" "  ")
+     (for ((u (cube-orientation C)))
+       (fprintf o "~a " u))
+     (newline o)
+     (fprintf o "~a" "  ")
+     (for ((u (cube-colors C)))
+       (fprintf o "~a " u))
+     (newline o)
+     (fprintf o "~a" "  ")
+     (for ((u (cube-facets C)))
+       (fprintf o "~a " u))
+     (fprintf o "~a" "]"))))
+
+(define C
+  (cube (list->vector (range 0 49))
+        (list->vector (append-map make-list '(8 8 8 8 8 8) '(w r g o b y)))
+        (list->vector (append-map make-list '(8 8 8 8 8 8) '(U L F R B D)))))
+
+
+
+
+
+
+
 ;; Cube organization:
 ;;
 ;; layers:
@@ -15,7 +53,7 @@
 ;;    left - middle - right
 ;;    top - middle - bottom
 
-;; This is what my cube looks like.
+;; This is what my cube looks like in the starting position.
 ;;
 ;;    w = white,  r = red,  g = green, o = orange, b = blue, y = yellow.
 ;;
