@@ -16,23 +16,19 @@
 ;; wwwwwwww | rrrrrrrr | gggggggg | oooooooo | bbbbbbbb | yyyyyyyy
 ;; 1 ---- 8   9 --- 16   17 -- 24   25 -- 32   33 -- 40   41 -- 48
 
+(define (write-component o vec #:newline (newline #t))
+  (fprintf o (if newline "~n~a" "~a") "  ")    
+  (for ((u vec))
+    (fprintf o "~a " u)))
 
 (struct cube (facets colors orientation)
   #:transparent
   #:methods gen:custom-write
-  ((define (write-proc C o w?)
-     (fprintf o "[ CUBE~n")
-     (fprintf o "~a" "  ")
-     (for ((u (cube-orientation C)))
-       (fprintf o "~a " u))
-     (newline o)
-     (fprintf o "~a" "  ")
-     (for ((u (cube-colors C)))
-       (fprintf o "~a " u))
-     (newline o)
-     (fprintf o "~a" "  ")
-     (for ((u (cube-facets C)))
-       (fprintf o "~a " u))
+  ((define (write-proc mycube o w?)
+     (fprintf o "[ CUBE")
+     (write-component o (cube-orientation mycube))
+     (write-component o (cube-colors mycube))
+     (write-component o (vector-drop (cube-facets mycube) 1))
      (fprintf o "~a" "]"))))
 
 (define C
@@ -151,13 +147,25 @@
 ;;   3,27,33 <=> white, orange, blue
 ;;   8,19,25 <=> white, orange green
 ;;   6,11,17 <=> white, red, green
-;;
+
+;;          8        16        24        32        40        48
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+
 ;;   Down face:
 ;;   14,40,46 <=> red, blue, yellow
 ;;   16,22,41 <=> red, green, yellow
 ;;   24,30,43 <=> green, orange, yellow
 ;;   32,38,48 <=> orange, blue, yellow
 ;;
+;;          8        16        24        32        40        48
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+
 
 ;; Edge cubes:
 ;;
@@ -167,17 +175,37 @@
 ;;   5,26 <=> white, orange
 ;;   7,18 <=> white, green
 ;;
+;;          8        16        24        32        40        48
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+
+;;
 ;; Middle layer:
 ;;   12,37 <=> red, blue
 ;;   13,29 <=> red, green
 ;;   21,28 <=> green, orange
 ;;   29,36 <=> orange, blue
 ;;
+;;          8        16        24        32        40        48
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+
+;;
 ;; Bottom layer:
 ;;   15,44 <=> red, yellow
 ;;   23,42 <=> green, yellow
 ;;   31,45 <=> orange, yellow
 ;;   39,47 <=> blue, yellow
+;;
+;;          8        16        24        32        40        48
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
+;;   00000000  00000000  00000000  00000000  00000000  00000000
 
 
 
