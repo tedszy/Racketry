@@ -116,4 +116,39 @@
 
 (require "sicp-35-streams-api.rkt")
 
+;; This version uses streams.
+(define (get-second-prime-by-streams a b)
+  (sref (sfilter prime? (smake-interval a b)) 1))
+
+(define (table-compare)
+  (let ((intervals '((10000 100000)
+                     (10000 200000)
+                     (10000 400000))))
+    (print-table
+     #:bars true #:head true
+     (cons (list "lower" "upper" "2nd prime: lists" "2nd prime: streams")
+           (map (lambda (interval)
+                  (let ((a (car interval))
+                        (b (cadr interval)))
+                    (map number->string
+                         (list a
+                               b
+                               (let ((tt (current-milliseconds)))
+                                 (begin (get-second-prime a b)
+                                        (- (current-milliseconds) tt)))
+                               (let ((tt (current-milliseconds)))
+                                 (begin (get-second-prime-by-streams a b)
+                                        (- (current-milliseconds) tt)))))))
+                intervals)))))
+
+;; Now the advantage of streams is revealed.
+;; 
+;; sicp-35a-intro.rkt﻿> (table-compare)
+;;
+;; lower    upper   2nd prime: lists   2nd prime: streams
+;; ------------------------------------------------------
+;; 10000 | 100000 |              101 |                  0
+;; 10000 | 200000 |              171 |                  0
+;; 10000 | 400000 |              446 |                  0
+
 
