@@ -2,6 +2,18 @@
 
 #lang racket
 
+(provide scons
+         scar
+         scdr
+         sref
+         smap
+         sfor-each
+         smake-interval
+         sfilter
+         snull?
+         the-empty-stream
+         ls)
+
 (define (memoize proc)
   (let ((already-run #f)
         (result #f))
@@ -12,9 +24,11 @@
                  result)
           result))))
 
-;; Want to avoid using functions that exist in base Racket:
-;; delay, force, stream, empty-stream. Others are in the 
-;; stream library.
+;; We wish to avoid using functions that exist in Racket:
+;; delay, force, stream, empty-stream etc. Racket's stream
+;; api closely follows the SICP naming conventions. Instead
+;; of stream-car, stream-cdr etc, we will use prefix "s"
+;; to mean stream: scar, scdr etc.
 
 (define-syntax delay-plain
   (syntax-rules ()
@@ -32,6 +46,12 @@
 
 (define (scar s) (car s))
 (define (scdr s) (my-force (cdr s)))
+
+;; Of course having the empty stream to be the empty list
+;; will cause problems if we are making streams of lists,
+;; some possibly empty. We won't have this problem in the future
+;; because we switch over to Racket's built-in streams.
+;; Racket's empty-stream object is not equivalent to the empty list.
 (define the-empty-stream '())
 (define (snull? s) (null? s))
 
@@ -64,15 +84,20 @@
                 (sfilter pred (scdr s))))
         (else (sfilter pred (scdr s)))))
 
+;; Displays both finite (empty-terminated) streams
+;; and infinite streams.
 (define (ls s (terms 10))
   (display "[")
   (let loop ((s s) (n terms))
-    (if (< n 1)
-        (display "...]")
-        (begin (display (scar s))
-               (display ", ")
-               (loop (scdr s) (sub1 n))))))
+    (cond ((< n 1) (display "...]"))
+          ((snull? s) (begin (display s)
+                             (display "]")))
+          (else (begin (display (scar s))
+                       (display ", ")
+                       (loop (scdr s) (sub1 n)))))))
 
+
+;; Test.
 (define ones (scons 1 ones))
-(define foo (smake-interval 10 30))
+(define foo (smake-interval 10 15))
 
