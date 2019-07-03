@@ -113,3 +113,7 @@
 ;; What we want is a method of programming that allows us to use the
 ;; same kind of map-reduce-list-HOF programming idioms, but with
 ;; efficiency more similar to iteration. The answer is streams.
+
+(require "sicp-35-streams-api.rkt")
+
+
