@@ -121,8 +121,8 @@
   (sref (sfilter prime? (smake-interval a b)) 1))
 
 (define (table-compare)
-  (let ((intervals '((10000 100000)
-                     (10000 200000)
+  (let ((intervals '((10000 100000) 
+                     (10000 200000) 
                      (10000 400000))))
     (print-table
      #:bars true #:head true
@@ -151,4 +151,12 @@
 ;; 10000 | 200000 |              171 |                  0
 ;; 10000 | 400000 |              446 |                  0
 
+
+(define (make-timed fn)
+  (lambda args
+    (let ((tt (current-milliseconds)))
+      (values (apply fn args)
+              (- (current-milliseconds) tt)))))
+
+(define foo (make-timed get-second-prime))
 
