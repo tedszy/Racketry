@@ -136,7 +136,8 @@
 
 ;; This version uses streams.
 (define (get-second-prime-by-streams a b)
-  (sref (sfilter prime? (smake-interval a b)) 1))
+  (sicp-stream-ref 
+   (sicp-stream-filter prime? (sicp-stream-make-interval a b)) 1))
 
 (define second-prime-2
   (make-format-profile

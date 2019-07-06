@@ -7,10 +7,35 @@
 
 ;; Exercise 3.51 ========================================
 
-(define (show u) (newline) (display u) u)
-(define y (smake-interval 0 10))
-;;(define x (smap show y))
+;; To understand what is going on in this exercise we should 
+;; meditate on the following passage from SICP (pg.434):
+;;
+;;   "...we will arrange for the cdr of a stream to be 
+;;   evaluated when it is accessed by the [sicp-]stream-cdr
+;;   procedure rather than when the stream is constructed
+;;   by [sicp-]cons-stream."
 
+
+
+
+
+(define (show u) (newline) (display u) u)
+(define x (sicp-stream-map show (sicp-stream-make-interval 0 10)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;; -----------------
 
 ;; Compare with native Racket streams.
 ;; (define (stream-interval a b)
@@ -54,20 +79,20 @@
 
 ;; Exercise 3.52 ========================================
 
-(define sum 0)
+;; (define sum 0)
 
-(define (accumulate x)
-  (set! sum (+ x sum)) 
-  sum)
+;; (define (accumulate x)
+;;   (set! sum (+ x sum)) 
+;;   sum)
 
 ;; Triangular numbers.
-(define seq (smap accumulate (smake-interval 1 20)))
+;;(define seq (smap accumulate (smake-interval 1 20)))
 
 ;; Even triangular numbers.
-(define seq2 (sfilter even? seq))
+;;(define seq2 (sfilter even? seq))
 
 ;; Triangular numbers divisible by 5.
-(define seq3  (sfilter (lambda (x) (= (remainder x 5) 0)) seq))
+;;(define seq3  (sfilter (lambda (x) (= (remainder x 5) 0)) seq))
 
 ;; sicp-35b.rkt﻿> (ls seq)
 ;;
