@@ -221,20 +221,23 @@
 
 ;; Exercise 3.52 ========================================
 
-;; (define sum 0)
-
-;; (define (accumulate x)
-;;   (set! sum (+ x sum)) 
-;;   sum)
+(define sum 0)
+(define (accumulate x)
+  (set! sum (+ x sum)) 
+  sum)
 
 ;; Triangular numbers.
-;;(define seq (smap accumulate (smake-interval 1 20)))
+(define seq
+  (sicp-stream-map accumulate
+                   (sicp-stream-make-interval 1 20)))
 
 ;; Even triangular numbers.
-;;(define seq2 (sfilter even? seq))
+(define seq2 (sicp-stream-filter even? seq))
 
 ;; Triangular numbers divisible by 5.
-;;(define seq3  (sfilter (lambda (x) (= (remainder x 5) 0)) seq))
+(define seq3
+  (sicp-stream-filter (lambda (x) (= (remainder x 5) 0))
+                      seq))
 
 ;; sicp-35b.rkt﻿> (ls seq)
 ;;
