@@ -214,11 +214,6 @@
 
 
 
-
-
-
-
-
 ;; Exercise 3.52 ========================================
 
 (define sum 0)
@@ -227,27 +222,65 @@
   sum)
 
 ;; Triangular numbers.
-(define seq
+(define triangular
   (sicp-stream-map accumulate
                    (sicp-stream-make-interval 1 20)))
+(printf "after triangular: sum ==> ~a\n" sum)
+
+;; Without memoization:
+;;
+;; At this point the value of sum is 1. Why is that?
+;; Becuse the accumulate function had to be evaluated
+;; once to fill the car of the stream seq.
+;;
+;; Now let's display seq and check sum.
+;;
+;; (display-stream seq) ==> 1 ... 210 
+;; sum ==> 210
+;;
+;; The sum contains the next triangular number. However if we
+;; run this again...
+;;
+;; (display-stream seq) ==> 1 .. 419
+;; sum ==> 419
+;;
+;; which has another 209 tacked on. The car is already evaluated
+;; so the 1 doesn't go into sum again, but all the other numbers,
+;; do get added on, every time the sequence is displayed.
+;;
+;; With memoization:
+;;
+;; sum ==> 1
+;; (display-stream seq) ==> 1 ... 210
+;; sum ==> 210
+;; (display-stream seq) ==> 1 ... 210
+;; sum ==> 201
+;;
+;; The sum variable doesn't change because the accumulate
+;; function is memoized. The same function call isn't done
+;; twice.
+
+;; Now we can answer the SICP question.
 
 ;; Even triangular numbers.
-(define seq2 (sicp-stream-filter even? seq))
+(define triangular-even 
+  (sicp-stream-filter even? triangular))
+(printf "after triangular-even: sum ==> ~a\n" sum)
 
 ;; Triangular numbers divisible by 5.
-(define seq3
-  (sicp-stream-filter (lambda (x) (= (remainder x 5) 0))
-                      seq))
+(define triangular-div-5
+  (sicp-stream-filter 
+   (lambda (x) (= (remainder x 5) 0)) triangular))
+(printf "after seq-div-5: sum ==> ~a\n" sum)
 
-;; sicp-35b.rkt﻿> (ls seq)
-;;
-;; [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, ...]
-;;
-;; sicp-35b.rkt﻿> (ls seq2)
-;;
-;; [6, 224, 230, 254, 264, 300, 314, 362, 380, ()]
-;;
-;; sicp-35b.rkt﻿> (ls seq3)
-;;
-;; [15, 430, 445, 475, 500, 545, 580, ()]
+;; 7th even triangular counting from 0 is 136
+(sicp-stream-ref triangular-even 7)
+(printf "after ref 7 of triangular-even: sum ==> ~a\n" sum)
 
+;; 10, 15, 45, 55, 105, 120, 190, 210
+(display-stream triangular-div-5)
+(printf "after display seq-div-5: sum ==> ~a\n" sum)
+
+;; With memoization:
+;;
+;; 

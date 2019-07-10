@@ -13,7 +13,8 @@
          sicp-stream-filter
          sicp-stream-null?
          sicp-empty-stream
-         ls)
+         ls
+         display-stream)
 
 (define (memoize proc)
   (let ((already-run #f)
@@ -43,7 +44,7 @@
 
 (define-syntax sicp-stream-cons
   (syntax-rules ()
-    ((_ a b) (cons a (delay-plain b)))))
+    ((_ a b) (cons a (delay-memoized b)))))
 
 (define (sicp-stream-car s) (car s))
 (define (sicp-stream-cdr s) (my-force (cdr s)))
@@ -97,6 +98,8 @@
                        (display ", ")
                        (loop (sicp-stream-cdr s) (sub1 n)))))))
 
+;; We prefer ls, but have to use this for some exercises.
+(define (display-stream s) (sicp-stream-for-each displayln s))
 
 ;; Exercise 3.50 ========================================
 
