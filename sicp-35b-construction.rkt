@@ -216,6 +216,8 @@
 
 ;; Exercise 3.52 ========================================
 
+(printf "\n----------\n")
+
 (define sum 0)
 (define (accumulate x)
   (set! sum (+ x sum)) 
@@ -271,16 +273,71 @@
 (define triangular-div-5
   (sicp-stream-filter 
    (lambda (x) (= (remainder x 5) 0)) triangular))
-(printf "after seq-div-5: sum ==> ~a\n" sum)
+(printf "after triangular-div-5: sum ==> ~a\n" sum)
 
 ;; 7th even triangular counting from 0 is 136
 (sicp-stream-ref triangular-even 7)
 (printf "after ref 7 of triangular-even: sum ==> ~a\n" sum)
 
-;; 10, 15, 45, 55, 105, 120, 190, 210
 (display-stream triangular-div-5)
 (printf "after display seq-div-5: sum ==> ~a\n" sum)
 
-;; With memoization:
+;; WITH memoization this is what happens...
 ;;
+;; After triangular is defined, sum = 1 because filling in the
+;; car of the stream required the evaluation of the accumulate
+;; function.
 ;; 
+;; After triangular-even has been defined, sum = 6 because
+;; the first even triangular is 6, and that's what must go
+;; in the car (stream evaluates the car). So the stream filtering
+;; required that triangular numbers up to 6 be generated.
+;;
+;; After triangular-dev-5 was defined, sum = 10 because
+;; stream-filter had to evaluate triangular numbers until 10 was found.
+;; That's the first one divisible by 5.
+;;
+;; After finding the ref 7 element of triangular-even, sum = 136.
+;; That's the 7th (counting from 0) even triangular number.
+;; 
+;; After the entire stream triangular-dev-5 has been displayed,
+;; sum is 210 because that's the last one divisible by 5 in the
+;; stream of triangular numbers.
+
+
+
+
+
+;; And now WITHOUT memoization, the behavior is pathological,
+;; but still possible to understand:
+
+
+
+;; Triangular
+;; 1 2 3  4  5  6  7  8  9 10 11 12 13  14  15  16  17  18  19  20
+;; 1 3 6 10 15 21 28 36 45 55 66 78 91 105 120 136 153 171 190 210
+
+;; Triangular evens.
+;; [6, 10, 28, 36, 66, 78, 120, 136, 190, 210, ...]
+
+;; Triangular-even after triangular-div-5 has been defined.
+;; [6, 24, 30, 54, 64, 100, 114, 162, 180, ()]
+
+;; accumulator sum starts at 15:
+ 
+;;     3   4   5   6   7  8  9  10 11 12  13  14  15   16  17
+;;     6  19  24  30  37 45 54  64 75 87 100 114 129  145 162
+;;     *      **  **        **  **       *** ***          ***  
+
+;; after ref 7, sum is at 162
+;;
+;;  4    5    6   7   8   9  10  11  12  13  14  15  16  17
+;; 15  167  173 180 188 197 207 218 230 243 257 272 288 305
+;; **           ***                 ***                 ***
+
+;; Got it! Took some time to figure this out!
+
+
+
+
+  
