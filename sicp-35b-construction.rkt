@@ -216,6 +216,10 @@
 
 ;; Exercise 3.52 ========================================
 
+;; Now we can answer the SICP question. It's challenging to
+;; explain exactly how the exercise code behaves when memoization
+;; is turned off
+
 (printf "\n----------\n")
 
 (define sum 0)
@@ -228,41 +232,6 @@
   (sicp-stream-map accumulate
                    (sicp-stream-make-interval 1 20)))
 (printf "after triangular: sum ==> ~a\n" sum)
-
-;; Without memoization:
-;;
-;; At this point the value of sum is 1. Why is that?
-;; Becuse the accumulate function had to be evaluated
-;; once to fill the car of the stream seq.
-;;
-;; Now let's display seq and check sum.
-;;
-;; (display-stream seq) ==> 1 ... 210 
-;; sum ==> 210
-;;
-;; The sum contains the next triangular number. However if we
-;; run this again...
-;;
-;; (display-stream seq) ==> 1 .. 419
-;; sum ==> 419
-;;
-;; which has another 209 tacked on. The car is already evaluated
-;; so the 1 doesn't go into sum again, but all the other numbers,
-;; do get added on, every time the sequence is displayed.
-;;
-;; With memoization:
-;;
-;; sum ==> 1
-;; (display-stream seq) ==> 1 ... 210
-;; sum ==> 210
-;; (display-stream seq) ==> 1 ... 210
-;; sum ==> 201
-;;
-;; The sum variable doesn't change because the accumulate
-;; function is memoized. The same function call isn't done
-;; twice.
-
-;; Now we can answer the SICP question.
 
 ;; Even triangular numbers.
 (define triangular-even 
@@ -286,56 +255,84 @@
 ;;
 ;; After triangular is defined, sum = 1 because filling in the
 ;; car of the stream required the evaluation of the accumulate
-;; function.
+;; function once and no more.
 ;; 
 ;; After triangular-even has been defined, sum = 6 because
-;; the first even triangular is 6, and that's what must go
-;; in the car (stream evaluates the car). So the stream filtering
+;; the first even triangular is 6. The stream filtering
 ;; required that triangular numbers up to 6 be generated.
+;; This is a key point, because to do that, the elements
+;; 1, 2, 3 of the interval stream have to be forced.
 ;;
 ;; After triangular-dev-5 was defined, sum = 10 because
-;; stream-filter had to evaluate triangular numbers until 10 was found.
-;; That's the first one divisible by 5.
+;; That's the first one divisible by 5. The interval stream
+;; had to be evaluated up to: 1, 2, 3, 4.
 ;;
 ;; After finding the ref 7 element of triangular-even, sum = 136.
-;; That's the 7th (counting from 0) even triangular number.
-;; 
+;; That's the 7th (counting from 0) even triangular number. But
+;; to do this, this part of the interval stream had to be forced:
+;;
+;; 1 2 3  4  5  6  7  8  9 10 11 12 13  14  15  16
+;; 1 3 6 10 15 21 28 36 45 55 66 78 91 105 120 136
+;;                                             ***
+;;
 ;; After the entire stream triangular-dev-5 has been displayed,
 ;; sum is 210 because that's the last one divisible by 5 in the
-;; stream of triangular numbers.
-
-
-
-
+;; stream of triangular numbers. All of the elements of the [1..20]
+;; interval stream have been evaluated.
+;;
+;; And when accumulate is evaluated once anywhere, it isn't
+;; evaluated again because of memoization.
 
 ;; And now WITHOUT memoization, the behavior is pathological,
-;; but still possible to understand:
-
-
-
-;; Triangular
-;; 1 2 3  4  5  6  7  8  9 10 11 12 13  14  15  16  17  18  19  20
-;; 1 3 6 10 15 21 28 36 45 55 66 78 91 105 120 136 153 171 190 210
-
-;; Triangular evens.
-;; [6, 10, 28, 36, 66, 78, 120, 136, 190, 210, ...]
-
-;; Triangular-even after triangular-div-5 has been defined.
-;; [6, 24, 30, 54, 64, 100, 114, 162, 180, ()]
-
-;; accumulator sum starts at 15:
- 
+;; but still possible to predict. 
+;;
+;; On definition of triangular, the first element of interval is
+;; evaluated and that's the first triangular number (goes in car.)
+;;
+;; 1 
+;; 1
+;; *
+;; sum = 1
+;;
+;; On definition of trangular-even, interval is evaluated up to 3,
+;; giving 6 as the first even triangular.
+;;
+;; 1 2 3  
+;; 1 3 6
+;;     *
+;; sum = 6
+;;
+;; After definition of triangular-div-5. Interval is evaluated
+;; up to 4, giving the "first" triangular number divisible
+;; by 5 to be (incorrectly) 15.
+;; 
+;; 1 2  3  4  
+;; 6 8 11 15
+;;        **
+;; sum = 15
+;;
+;; After getting 7th element of triangular-evens: Interval stream
+;; is evaluated up to element 3, so continuting with the mapping
+;; (but with sum = 15):
+;;
 ;;     3   4   5   6   7  8  9  10 11 12  13  14  15   16  17
 ;;     6  19  24  30  37 45 54  64 75 87 100 114 129  145 162
 ;;     *      **  **        **  **       *** ***          ***  
-
-;; after ref 7, sum is at 162
+;; sum = 162
+;;
+;; Now we display triangular-div-5. The first element has been
+;; already computed and put in car, the rest has to be forced,
+;; beginning at the 5th element of the mapping over the interval
+;; stream (but with sum = 162!):
 ;;
 ;;  4    5    6   7   8   9  10  11  12  13  14  15  16  17
 ;; 15  167  173 180 188 197 207 218 230 243 257 272 288 305
 ;; **           ***                 ***                 ***
-
-;; Got it! Took some time to figure this out!
+;; sum = 305
+;;
+;; So we see 15, 180, 230, 305 displayed.
+;;
+;; Took some effort to figure this out!
 
 
 
