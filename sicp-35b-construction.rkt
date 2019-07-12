@@ -1,4 +1,4 @@
-;; sicp-35b.rkt
+;; sicp-35b-construction.rkt
 
 #lang racket
 

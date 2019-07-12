@@ -44,7 +44,7 @@
 
 (define-syntax sicp-stream-cons
   (syntax-rules ()
-    ((_ a b) (cons a (delay-plain b)))))
+    ((_ a b) (cons a (delay-memoized b)))))
 
 (define (sicp-stream-car s) (car s))
 (define (sicp-stream-cdr s) (my-force (cdr s)))
