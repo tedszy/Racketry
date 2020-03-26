@@ -3,7 +3,7 @@
 #lang racket
 
 (require "check.rkt"
-         "simple-table.rkt")
+         "format-table.rkt")
 
 (provide sqrt-table)
 
@@ -38,7 +38,9 @@
 ;;   17/12 |        24/17 |             577/408 |  1.41421569
 ;; 577/408 |      816/577 |       665857/470832 |  1.41421356 
 (define (sqrt-table x n)
-  (print-table (sqrt-approximation-table x n)))
+  (displayln
+   (format-table/simple #:separator " | "
+                        (sqrt-approximation-table x n))))
 
 ;; Roll all the SICP code relating to numerical 
 ;; square root into one procedure using a named let. 
@@ -167,14 +169,15 @@
 ;;        1e-05 | 0.0031622926477232706 | 0.0031622776601683794
 ;; 200000000000 |      447213.595499958 |     447213.5954999579
 (define (adaptive-sqrt-demo)
-  (print-table
+  (displayln
+   (format-table/simple #:separator " | "
     (list (list "x" "adaptive-sqrt x" "built-in sqrt x")
           (list (number->string small-number)
                 (number->string (my-adaptive-sqrt small-number))
                 (number->string (sqrt small-number)))
           (list (number->string large-number)
                 (number->string (my-adaptive-sqrt large-number))
-                (number->string (sqrt large-number))))))
+                (number->string (sqrt large-number)))))))
 
 
 
@@ -202,7 +205,7 @@
 ;; 200000000000 |    5848.035476437416 |    5848.035476425729
 (define (adaptive-cuberoot-demo)
   (define (cuberoot x) (expt x 1/3))
-  (print-table
+  (format-table/simple
     (list (list "x" "adaptive-cuberoot x" "built-in cuberoot x")
           (list (number->string small-number)
                 (number->string (my-adaptive-cuberoot small-number))

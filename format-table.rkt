@@ -7,7 +7,8 @@
 
 (require racket/format)  ;; ~a, ~r
 
-(provide format-table/simple
+(provide format-real
+         format-table/simple
          format-table)
 
 ;; A "table" is a list of lists of strings.
@@ -24,7 +25,10 @@
 (define (format-field field width align)
   (~a #:width width #:align align field))
 
-;; If we need them:
+(define (format-real x precision)
+  (~r x #:precision (list '= precision)))
+
+;; If we need it:
 ;;
 ;; (~r 1024 #:base 2 #:min-width 32 #:pad-string "0")
 ;; ==> "00000000000000000000010000000000"
