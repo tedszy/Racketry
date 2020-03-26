@@ -2,8 +2,7 @@
 
 #lang racket
 
-(require "check.rkt"
-         "simple-table.rkt")
+(require "format-table.rkt")
 
 ;; Euclidean algorithm. m = q*d + r.
 ;; m = dividend, q = quotient,
@@ -15,7 +14,9 @@
              (b b) 
              (tt '(("m" "q" "d" "r"))))
     (if (= b 0)
-        (begin (print-table (reverse tt) #:head #t)
+        (begin (displayln
+                (format-table (reverse tt)
+                              #:header-char #\-))
                a)
         (loop b 
               (remainder a b) 
