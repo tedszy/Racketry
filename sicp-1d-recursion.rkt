@@ -2,8 +2,7 @@
 
 #lang racket
 
-(require "check.rkt"
-         "simple-table.rkt")
+(require "check.rkt")
 
 ;; Bad recursive procedure for computing Fibonacci numbers.
 ;; The number of times that the smaller Fibonacci numbers

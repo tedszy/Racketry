@@ -3,7 +3,7 @@
 #lang racket
 
 (require "check.rkt"
-         "simple-table.rkt")
+         "format-table.rkt")
 
 ;; This is tree-recursive. According to the applicative
 ;; evaluation model it works like this (call the function F).
@@ -130,11 +130,13 @@
 ;; h(n) = 2^[(2^(n-1)]^2
 ;; k(n) = 5*n^2.
 (define (ackermann-table n)
-  (print-table 
-   (let loop ((i 1) (table (list (list "n" "f" "g" "h" "k"))))
-     (if (> i n )
-         (reverse table)
-         (loop (+ i 1)
-               (cons (map number->string 
-                          (list i (f i) (g i) (h i) (k i)))
-                     table))))))
+  (displayln
+   (format-table/simple #:separator " | "
+    (let loop ((i 1) (table (list (list "n" "f" "g" "h" "k"))))
+      (if (> i n )
+          (reverse table)
+          (loop (+ i 1)
+                (cons (map number->string 
+                           (list i (f i) (g i) (h i) (k i)))
+                      table)))))))
+  
