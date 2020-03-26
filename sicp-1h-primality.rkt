@@ -3,7 +3,7 @@
 #lang racket
 
 (require rackunit
-         "simple-table.rkt")
+         "format-table.rkt")
 
 ;; Theta(sqrt(n)) order of growth primality test. 
 ;;
@@ -15,9 +15,9 @@
 ;; n itself is the only such divisor. 
 ;; And n is therefore prime. 
 ;;
-;; Why? Because if d|n then n/d also | d. It's not
+;; Why? Because if d|n then n/d | n also. It's not
 ;; possible that both are larger than sqrt(n) because
-;; if so then d * d/n would be > n. So one of these
+;; if so then d * n/d would be > n. So one of these
 ;; divisors must be smaller than sqrt(n). If there isn't
 ;; one below sqrt(n) then there isn't one bigger than
 ;; sqrt(n) either.
@@ -38,7 +38,7 @@
 ;; This is a probabilistic test based on
 ;; Fermat's little theorem:
 ;;
-;;    If q is prime then a^q = a mod q.
+;;    If q is prime then a^q = a mod q, a < q.
 ;;
 ;; Converse of this is: 
 ;;
@@ -58,7 +58,7 @@
   ;; want to take modulus to be q since that is a 
   ;; state variable that gets updated in this tail
   ;; recursive implimentation. The modulus is the
-  ;; initial power, qq, not the updated powers q.
+  ;; initial power qq, not the updated powers q.
   (define (mod-square x) (remainder (* x x) qq))
   (let loop ((a a) (q qq) (result 1))
     (cond ((= q 0)
@@ -107,7 +107,7 @@
 ;; If q is a Charmichael number then
 ;;
 ;;    a^q = a mod q for all a < q.
-;;
+
 
 ;; Exercise 1.21 ========================================
 
@@ -180,7 +180,8 @@
 ;;   limit       primes       milliseconds
 ;;
 (define (prime-time-table limit-list)
-  (print-table #:bars true #:head true
+  (format-table #:header-char #\-
+                #:separator " | "
                (cons (list "lower limit" "primes" "msecs")
                      (map (lambda (N)
                             (let ((row (first-three-primes-larger-than N)))
@@ -198,7 +199,7 @@
          (expt 10 e))
        (list 10 11 12 13 14)))
 
-;; (prime-time-table *limit-list*)
+;; (displayln (prime-time-table *limit-list*))
 ;;     lower limit                                              primes   msecs
 ;; ---------------------------------------------------------------------------
 ;;     10000000000 |             10000000019, 10000000033, 10000000061 |     9
@@ -219,6 +220,62 @@
 
 
 ;; Exercise 1.23 ========================================
+
+;; The simple method of testing primality, prime? and
+;; get-smallest divisor, iterates through candidate divisors
+;; consecutively. But we don't need to test any further even
+;; divisors if 2 does not divide n. So we will create a new
+;; version of get-smallest-divisor having this refinement.
+
+;; (next d) => 3
+;; (next d>2) => k+2.
+;;
+;; Since d starts at 2, next will produce 3, 5, 7, etc
+;;
+;; prime2? iterates over half the number of divisors that
+;; prine? does. Does it run twice as fast? Why or why not?
+
+(define (get-smallest-divisor2 n)
+  (define (next d) (if (= d 2) 3 (+ d 2)))
+  (let loop ((d 2))
+    (cond ((> (* d d) n) n)
+          ((= (remainder n d) 0) d)
+          (else (loop (next d))))))
+
+(define (prime2? n)
+  (= n (get-smallest-divisor2 n)))
+
+(define (make-prime-test-timer prime-predicate)
+  (lambda (candidate)
+    (let ((t1 (current-milliseconds)))
+      (let ((is-prime? (prime-predicate candidate)))
+        (begin
+          (displayln
+           (string-join
+            (list "*** prime:"
+                  (number->string (- (current-milliseconds)
+                                     t1))
+                  "milliseconds.")))
+          is-prime?)))))
+
+(define prime-time-1 (make-prime-test-timer prime?))
+(define prime-time-2 (make-prime-test-timer prime2?))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ;; Exercise 1.24 ========================================
 
