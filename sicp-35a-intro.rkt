@@ -2,7 +2,7 @@
 
 #lang racket
 
-(require "simple-table.rkt")
+(require "format-table.rkt")
 
 ;; Use create a version of a function that also returns its execution time.
 (define (make-profiled fn)
@@ -63,17 +63,17 @@
                      (10000 200000)
                      (10000 300000)
                      (10000 400000))))
-    (print-table
-     #:bars true #:head true
-     (cons (list "upper" "lower" "sum-primes-1" "sum-primes-2")
-           (map (lambda (interval)
-                  (let ((a (car interval))
-                        (b (cadr interval)))
-                    (list (number->string a)
-                          (number->string b)
-                          (sum-primes-1 a b)
-                          (sum-primes-2 a b))))
-                intervals)))))
+    (displayln (format-table
+                #:header-char #\- #:separator " | "
+                (cons (list "upper" "lower" "sum-primes-1" "sum-primes-2")
+                      (map (lambda (interval)
+                             (let ((a (car interval))
+                                   (b (cadr interval)))
+                               (list (number->string a)
+                                     (number->string b)
+                                     (sum-primes-1 a b)
+                                     (sum-primes-2 a b))))
+                           intervals))))))
 
 ;; Let's compare the times to sum all primes in the iterval,
 ;; as done by both the efficient iterative method and the
@@ -107,15 +107,17 @@
   (let ((intervals '((10000 100000)
                      (10000 200000)
                      (10000 400000))))
-    (print-table #:bars true #:head true
-                 (cons (list "lower" "upper" "2nd prime" )
-                       (map (lambda (interval)
-                              (let ((a (car interval))
-                                    (b (cadr interval)))
-                                (list (number->string a)
-                                      (number->string b)
-                                      (second-prime-1 a b))))
-                            intervals)))))
+    (displayln
+     (format-table #:separator " | "
+                   #:header-char #\-
+                   (cons (list "lower" "upper" "2nd prime" )
+                         (map (lambda (interval)
+                                (let ((a (car interval))
+                                      (b (cadr interval)))
+                                  (list (number->string a)
+                                        (number->string b)
+                                        (second-prime-1 a b))))
+                              intervals))))))
 
 ;; sicp-35a-intro.rkt﻿> (second-prime-performance-table)
 ;;
@@ -148,17 +150,19 @@
   (let ((intervals '((10000 100000) 
                      (10000 200000) 
                      (10000 400000))))
-    (print-table
-     #:bars true #:head true
-     (cons (list "lower" "upper" "2nd prime: lists" "2nd prime: streams")
-           (map (lambda (interval)
-                  (let ((a (car interval))
-                        (b (cadr interval)))
-                    (list (number->string a)
-                          (number->string b)
-                          (second-prime-1 a b)
-                          (second-prime-2 a b))))
-                intervals)))))
+    (displayln
+     (format-table
+      #:separator " | "
+      #:header-char #\-
+      (cons (list "lower" "upper" "2nd prime: lists" "2nd prime: streams")
+            (map (lambda (interval)
+                   (let ((a (car interval))
+                         (b (cadr interval)))
+                     (list (number->string a)
+                           (number->string b)
+                           (second-prime-1 a b)
+                           (second-prime-2 a b))))
+                 intervals))))))
 
 ;; Now the advantage of streams is revealed.
 ;;
