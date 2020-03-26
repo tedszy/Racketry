@@ -59,9 +59,9 @@
                (normalize table align))))
 
 (define (format-table table
-                      #:separator [separator "  "]
+                      #:separator [separator " | "]
                       #:align [align empty]
-                      #:header-char [header-char false])  
+                      #:header-char [header-char #f])  
   (let ((normalized-table (normalize table align)))
     (if header-char
         (let* ((header (string-join (first normalized-table)

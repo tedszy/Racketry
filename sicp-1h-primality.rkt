@@ -221,19 +221,19 @@
 
 ;; Exercise 1.23 ========================================
 
-;; The simple method of testing primality, prime? and
-;; get-smallest divisor, iterates through candidate divisors
-;; consecutively. But we don't need to test any further even
+;; The simple method of testing primality, prime? with
+;; get-smallest-divisor, iterates through candidate divisors
+;; consecutively. But we don't need to test any even
 ;; divisors if 2 does not divide n. So we will create a new
 ;; version of get-smallest-divisor having this refinement.
-
+;;
 ;; (next d) => 3
 ;; (next d>2) => k+2.
 ;;
 ;; Since d starts at 2, next will produce 3, 5, 7, etc
 ;;
-;; prime2? iterates over half the number of divisors that
-;; prine? does. Does it run twice as fast? Why or why not?
+;; prime2? iterates over half the divisors that prime? does.
+;; Does it run twice as fast? 
 
 (define (get-smallest-divisor2 n)
   (define (next d) (if (= d 2) 3 (+ d 2)))
@@ -245,39 +245,106 @@
 (define (prime2? n)
   (= n (get-smallest-divisor2 n)))
 
+;; We will construct a table to compare two prime predicate
+;; functions and calculate the ratio of their performance
+;; times. To do this we need some helper code.
+
+;; This takes a predicate function and returns a new
+;; multiple-value function returning the time elapsed
+;; along with the result of predicate.
 (define (make-prime-test-timer prime-predicate)
   (lambda (candidate)
     (let ((t1 (current-milliseconds)))
       (let ((is-prime? (prime-predicate candidate)))
-        (begin
-          (displayln
-           (string-join
-            (list "*** prime:"
-                  (number->string (- (current-milliseconds)
-                                     t1))
-                  "milliseconds.")))
-          is-prime?)))))
+        (values (- (current-milliseconds) t1)
+                is-prime?)))))
 
 (define prime-time-1 (make-prime-test-timer prime?))
 (define prime-time-2 (make-prime-test-timer prime2?))
 
+;; Construct performance table for exercise 1.23.
+(define (time-table-123 timed-prime-predicate-A
+                        timed-prime-predicate-B . my-primes)
+  (displayln
+   (format-table
+    (cons (list "p" "prime test A" "prime test B" "ratio A/B")
+          (map (lambda (p)
+                 (let-values (((timeA resultA) (timed-prime-predicate-A p))
+                              ((timeB resultB) (timed-prime-predicate-B p)))
+                   (list (format "~a" p)
+                         (format "~a ~ams" resultA timeA)
+                         (format "~a ~ams" resultB timeB)
+                         (format-real (/ timeA timeB 1.0) 2))))
+               my-primes)))))
 
+;; Applying this to the 12 big primes we discovered earlier...
+;;
+;; > (time-table-123 prime-time-1 prime-time-2
+;;                  10000000019 10000000033 10000000061
+;;                  100000000003 100000000019 100000000057
+;;                  1000000000039 1000000000061 1000000000063
+;;                  10000000000037 10000000000051 10000000000099
+;;                  100000000000031 100000000000067 100000000000097)
+;;
+;;               p | prime test A | prime test B | ratio A/B
+;;     10000000019 |       #t 1ms |       #t 1ms |  1.00
+;;     10000000033 |       #t 2ms |       #t 1ms |  2.00
+;;     10000000061 |       #t 2ms |       #t 1ms |  2.00
+;;    100000000003 |       #t 5ms |       #t 3ms |  1.67
+;;    100000000019 |       #t 5ms |       #t 3ms |  1.67
+;;    100000000057 |       #t 5ms |       #t 3ms |  1.67
+;;   1000000000039 |      #t 14ms |      #t 10ms |  1.40
+;;   1000000000061 |      #t 14ms |      #t 10ms |  1.40
+;;   1000000000063 |      #t 14ms |       #t 9ms |  1.56
+;;  10000000000037 |      #t 45ms |      #t 31ms |  1.45
+;;  10000000000051 |      #t 43ms |      #t 31ms |  1.39
+;;  10000000000099 |      #t 44ms |      #t 31ms |  1.42
+;; 100000000000031 |     #t 141ms |      #t 97ms |  1.45
+;; 100000000000067 |     #t 140ms |      #t 98ms |  1.43
+;; 100000000000097 |     #t 140ms |      #t 97ms |  1.44
+;;
+;; Can we explain why the ratio is 1.44 and not 2?
+;;
+;; It's true that the improved version iterates over half
+;; of the possible divisors. But for each iteration it
+;; introduces a function call (next), and a comparison
+;; with the divisor 2. We guess that this adds extra time
+;; for each divisor test, making the ratio of A/B less than 2.
+;; Let's test this guess by (1) moving the test for d=2 out
+;; of the loop entirely, and (2) inlining the function:
 
+(define (get-smallest-divisor3 n)
+  (if (= (remainder n 2) 0)
+      2
+      (let loop ((d 3))
+        (cond ((> (* d d) n) n)
+              ((= (remainder n d) 0) d)
+              (else (loop (+ d 2)))))))
 
+(define (prime3? n)
+  (= n (get-smallest-divisor3 n)))
 
+(define prime-time-3 (make-prime-test-timer prime3?))
 
-
-
-
-
-
-
-
-
-
+;; Check it on a bigger prime.
+;;
+;; > (time-table-123 prime-time-1 prime-time-3 1000000000000091)
+;;
+;;                p | prime test A | prime test B | ratio A/B
+;; 1000000000000091 |     #t 449ms |     #t 220ms |      2.04
+;;
+;; Yes! Now the ratio is close enough to 2!
 
 
 ;; Exercise 1.24 ========================================
+
+
+
+
+
+
+
+
 
 ;; Exercise 1.25 ========================================
 

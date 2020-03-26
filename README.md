@@ -2,7 +2,10 @@
 
 Exercises and projects in computer science using Racket.
 
-## SICP
+## SICP Revisited
+
+multiple return values, continuation passing style,
+for-loops...
 
 I have added some Racket style to the SICP
 exercises. That is, the use of structs where
