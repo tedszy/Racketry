@@ -2,7 +2,7 @@
 
 #lang racket
 
-(require "simple-table.rkt")
+(require "format-table.rkt")
 
 ;; Lambda expressions.
 ;;
@@ -69,11 +69,12 @@
                   (map (lambda (row)
                          (map symbol->string row))
                        tt))))
-    (print-table tt 
-                 #:head #t 
-                 #:bars #t 
-                 #:align (append (make-list (length args) 'left) 
-                                 (list 'center)))))
+    (displayln
+     (format-table tt 
+                  #:header-char #\- 
+                  #:separator " | "
+                  #:align (append (make-list (length args) 'left) 
+                                  (list 'center))))))
 
 ;; Define some valid formulas (tautologies): f.../arity
 ;;
