@@ -3,7 +3,7 @@
 #lang racket
 
 (require "check.rkt"
-         "simple-table.rkt")
+         "format-table.rkt")
 
 ;; n = size of problem, R(n) = resources needed to do n.
 ;;
@@ -110,7 +110,9 @@
 (define (my-sine x step table)
   (define (poly x) (- (* 3 x) (* 4 (* x x x))))
   (if (<= (abs x) 0.1)
-      x
+      (begin (displayln (format-table/simple #:separator " | "
+                                             (reverse table)))
+             x)
       (poly (my-sine (/ x 3.0)
                      (+ step 1)
                      (cons (list (number->string (+ step 1))
