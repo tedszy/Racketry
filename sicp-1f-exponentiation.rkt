@@ -2,10 +2,6 @@
 
 #lang racket
 
-(require "check.rkt"
-         "simple-table.rkt")
-
-
 ;; Recursive exponentiation.
 ;; Theta(n) steps.
 ;; Theta(n) space.
