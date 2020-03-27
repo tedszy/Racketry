@@ -3,6 +3,7 @@
 #lang racket
 
 (require rackunit
+         math/base
          "format-table.rkt")
 
 ;; Theta(sqrt(n)) order of growth primality test. 
@@ -88,22 +89,23 @@
 (check-equal? (mod-expt 110 100) (expmod 110 100 100))
 
 ;; Choose a random base a and do the test a^q = a mod q.
+;; For big integers, use random-natural from math/base module.
 (define (fermat-test q)
-  (let ((a (add1 (random (sub1 q)))))
+  (let ((a (add1 (random-natural (- q 1)))))
     (= (mod-expt a q) a)))
 
-;; Do the FLT test a certain number of times. If q passes
+;; Do the FT test a certain number of times. If q passes
 ;; all these tests it is probably a prime, but if q fails
 ;; it is for sure not prime.
-(define (flt-prime? q trials)
+(define (ft-prime? q trials)
   (cond ((= trials 0)
          true)
         ((fermat-test q)
-         (flt-prime? q (sub1 trials)))
+         (ft-prime? q (sub1 trials)))
         (else
          false)))
 
-;; Charmicheal numbers fool the FLT test.
+;; Charmicheal numbers fool the FT test.
 ;; If q is a Charmichael number then
 ;;
 ;;    a^q = a mod q for all a < q.
@@ -114,7 +116,6 @@
 ;; (get-smallest-divisor 199)   ==> 199
 ;; (get-smallest-divisor 1999)  ==> 1999
 ;; (get-smallest-divisor 19999) ==> 7
-
 
 
 ;; Exercise 1.22 ========================================
@@ -216,7 +217,6 @@
 ;;    282 * 3.16 = 891.12
 ;;
 ;; which are very close to the observed times!
-
 
 
 ;; Exercise 1.23 ========================================
@@ -338,12 +338,62 @@
 
 ;; Exercise 1.24 ========================================
 
+;; A study of the run times for the fast ft-prime?
+;; Fermat test. The Fermat test has Theta(log n) growth.
+;; Check this for the 12 primes we found above. Is it so?
+;; If not, can we explain why?
 
+;; It's convenient it is to have this higher order function!
+(define ft-prime-time (make-prime-test-timer
+                       (lambda (p)
+                         (ft-prime? p 10000))))
 
+(define (another-time-table timed-prime-predicate . my-primes)
+  (displayln
+   (format-table
+    (cons (list "prime" "ft results" "time/log(prime)")
+          (map (lambda (p)
+                 (let-values (((runtime result)
+                               (timed-prime-predicate p)))
+                   (list (number->string p)
+                         (format "~a ms, ~a" runtime result)
+                         (format-real (/ runtime (log p 10)) 7))))
+               my-primes)))))
 
-
-
-
+;; (another-time-table ft-prime-time
+;;                     10000000019 10000000033 10000000061
+;;                     100000000003 100000000019 100000000057
+;;                     1000000000039 1000000000061 1000000000063
+;;                     10000000000037 10000000000051 10000000000099
+;;                     100000000000031 100000000000067 100000000000097)
+;;
+;; Running this a few times and dropping results which
+;; have anomalously long times (I assume it's garbage
+;; collection), we get...
+;;
+;;           prime | ft results | time/log(prime)
+;;     10000000019 | 144 ms, #t | 14.4000000
+;;     10000000033 | 111 ms, #t | 11.1000000
+;;     10000000061 | 115 ms, #t | 11.5000000
+;;    100000000003 | 149 ms, #t | 13.5454545
+;;    100000000019 | 150 ms, #t | 13.6363636
+;;    100000000057 | 155 ms, #t | 14.0909091
+;;   1000000000039 | 156 ms, #t | 13.0000000
+;;   1000000000061 | 160 ms, #t | 13.3333333
+;;   1000000000063 | 163 ms, #t | 13.5833333
+;;  10000000000037 | 167 ms, #t | 12.8461538
+;;  10000000000051 | 170 ms, #t | 13.0769231
+;;  10000000000099 | 170 ms, #t | 13.0769231
+;; 100000000000031 | 187 ms, #t | 13.3571429
+;; 100000000000067 | 182 ms, #t | 13.0000000
+;; 100000000000097 | 182 ms, #t | 13.0000000
+;;
+;; The fit is pretty good for large primes. time/log(prime)
+;; is roughly constant. So we can conclude that the computation
+;; growth is Theta(log(n)).
+;;
+;; Why log(n)? Because most of the work is done
+;; by mod-expt which is a Theta(log(n)) algorithm. 
 
 
 ;; Exercise 1.25 ========================================
