@@ -20,11 +20,13 @@ enlightening. Procedures are given longer, more
 descriptive names. Interesting problems provide opportunities for
 going on tangents: there are many of those in SICP.
 
-* **SICP part 1.** Intro, expressions, evaluation models, 
-roots, adaptive roots, factorials, recursion, Ackermann function, 
-binomials, fibonacci numbers, estimating order of growth of computations, 
-change-making problems, computing sin(x), tail-recursion, exponentiation, 
-advanced ways of computing Fibonacci numbers, gcds and Lame's theorem.
+* **SICP 1.1 -- 1.2.** Exercises 1.1 to 1.20. Expressions. 
+Evaluation models: normal order, applicative order. 
+Roots, Newton's methond, adaptive methods. Factorials, 
+recursion, the Ackermann function, binomials, fibonacci numbers. 
+Estimating growth of computations, change-making problems, sin(x). 
+Tail-recursion, exponentiation, advanced ways of computing 
+Fibonacci numbers. Gcds, Lame's theorem.
 
 
 
