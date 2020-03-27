@@ -1,4 +1,8 @@
-;;; sicp-1b-roots.rkt
+;;; sicp1-1b-roots.rkt
+;;;
+;;; Exercises 1.6 -- 1.8.
+;;;
+;;; Finding roots. Newton's method. Adaptive methods.
 
 #lang racket
 
@@ -54,7 +58,6 @@
     (if (good-enough? y) 
         y 
         (loop (improve y)))))
-
 
 
 ;; Exercise 1.6 ========================================
@@ -127,7 +130,6 @@
 ;; (alyssa-product 10) ==> never ends
 
 
-
 ;; Exercise 1.7 ========================================
 
 ;; my-sqrt as written above should fail for very small
@@ -178,7 +180,6 @@
           (list (number->string large-number)
                 (number->string (my-adaptive-sqrt large-number))
                 (number->string (sqrt large-number)))))))
-
 
 
 ;; Exercise 1.8 ========================================

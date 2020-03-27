@@ -1,4 +1,9 @@
-;;; sicp-1a-eval.rkt
+;;; sicp1-1a-eval.rkt
+;;;
+;;; Exercises 1.1 -- 1.5.
+;;;
+;;; Expressions, models of evaluation, normal order,
+;;; applicative order.
 
 #lang racket
 

@@ -1,4 +1,8 @@
-;;; sicp-1g-gcd.rkt
+;;; sicp1-2e-gcd.rkt
+;;;
+;;; Exercise 1.20
+;;;
+;;; GCDs, Lame's theorem. Normal-order GCD.
 
 #lang racket
 

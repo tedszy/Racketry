@@ -1,4 +1,10 @@
-;;; sicp-1c-recursion.rkt
+;;; sicp1-2a-recursion.rkt
+;;;
+;;; Exercises 1.9, 1.10.
+;;;
+;;; Recursion, factorials, Ackermann function.
+
+
 
 #lang racket
 

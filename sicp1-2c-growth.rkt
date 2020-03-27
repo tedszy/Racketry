@@ -1,4 +1,10 @@
-;;; sicp-1e-growth.rkt
+;;; sicp1-2c-growth.rkt
+;;;
+;;; Exercises 1.14, 1.15.
+;;;
+;;; Space and time growth of computations.
+;;; Applications to making change, recursive
+;;; computation of sin(x).
 
 #lang racket
 

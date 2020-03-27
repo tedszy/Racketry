@@ -1,4 +1,7 @@
-;;; sicp-1h-primality.rkt
+;;; sicp1-2f-primality.rkt
+;;;
+;;; Prime testing, mod exponential, Fermat prime testing,
+;;; performance comparisons, log(n) growth of Fermat test.
 
 #lang racket
 

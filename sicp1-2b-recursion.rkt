@@ -1,4 +1,13 @@
-;;; sicp-1d-recursion.rkt
+;;; sicp1-2b-recursion.rkt
+;;;
+;;; Exercises 1.11 -- 1.13.
+;;;
+;;; Tail-recursion, good and bad ways to compute
+;;; Fibonacci numbers, making change, Pascal's
+;;; triangle, proof of Binet expression for Fibonacci
+;;; numbers.
+;;;
+
 
 #lang racket
 

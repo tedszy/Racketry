@@ -1,4 +1,11 @@
-;;; sicp-1f-exponentiation.rkt
+;;; sicp1-2d-exponentiation.rkt
+;;;
+;;; Exercises 1.16 -- 1.19.
+;;;
+;;; Fast exponentiation, growth, tail recursion,
+;;; elegant and fast methods for computing
+;;; fibonacci numbers, Fibonacci numbers by
+;;; continuation passing.
 
 #lang racket
 
