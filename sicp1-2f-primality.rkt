@@ -1,7 +1,9 @@
 ;;; sicp1-2f-primality.rkt
 ;;;
-;;; Prime testing, mod exponential, Fermat prime testing,
-;;; performance comparisons, log(n) growth of Fermat test.
+;;; Prime testing, divisors, mod exponential, Fermat test,
+;;; performance comparisons, log(n) growth of Fermat test...
+;;;
+;;; ...Charmichael numbers, Miller-Rabin test.
 
 #lang racket
 
@@ -107,11 +109,6 @@
          (ft-prime? q (sub1 trials)))
         (else
          false)))
-
-;; Charmicheal numbers fool the FT test.
-;; If q is a Charmichael number then
-;;
-;;    a^q = a mod q for all a < q.
 
 
 ;; Exercise 1.21 ========================================
@@ -405,6 +402,54 @@
 
 ;; Exercise 1.27 ========================================
 
+;; Charmicheal numbers fool the FT test.
+;; If q is a Charmichael number then
+;;
+;;    a^q = a mod q for all a < q.
+;;
+;; but q is not prime. The first few
+;; Charmichael numbers are:
+;;
+;;    561, 1105, 1729, 2465, 2821, 6601...
+;;
+;; Let's verify that they fool the Fermat test.
+
+(define (fermat-test-all q)
+  (for/and ((a (range 1 q)))
+    (= (mod-expt a q) a)))
+
+;; Make a table: we check that fermat test passes for
+;; all a < q. Then we verify the slow way, by finding
+;; divisors, that q is indeed NOT prime.
+
+(define (charmichael-table)
+  (let ((charmichaels (list 561 1105 1729 2465 2821 6601)))
+    (displayln
+     (format-table
+      (cons (list "charmichael q" "FT all a<q" "prime? q")
+            (map (lambda (q)
+                   (map (lambda (x)
+                          (format "~a" x))
+                        (list q
+                              (fermat-test-all q)
+                              (prime? q))))
+                 charmichaels))))))
+
+;; > (charmichael-table)
+;;
+;; charmichael q | FT all a<q | prime? q
+;;           561 |         #t |       #f
+;;          1105 |         #t |       #f
+;;          1729 |         #t |       #f
+;;          2465 |         #t |       #f
+;;          2821 |         #t |       #f
+;;          6601 |         #t |       #f
+;;
+;; They indeed fool the Fermat test!
+
+
 ;; Exercise 1.28 ========================================
+
+;; Miller-Rabin test.
 
 
