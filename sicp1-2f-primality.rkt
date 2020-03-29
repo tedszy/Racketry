@@ -11,10 +11,11 @@
          math/base
          "format-table.rkt")
 
-;; Theta(sqrt(n)) order of growth primality test. 
+;; A brute-force Theta(sqrt(n)) order of growth
+;; primality test. 
 ;;
 ;; Find the smallest divisor >= 2 of n.
-;; We try divisors d up to d^2 <= n. 
+;; We try divisors d up to d^2 <= n.
 ;;
 ;; If remainder of n/d is 0, then answer is d.
 ;; If no divisor such that d^2 <= n is found then
@@ -23,10 +24,10 @@
 ;;
 ;; Why? Because if d|n then n/d | n also. It's not
 ;; possible that both are larger than sqrt(n) because
-;; if so then d * n/d would be > n. So one of these
-;; divisors must be smaller than sqrt(n). If there isn't
-;; one below sqrt(n) then there isn't one bigger than
-;; sqrt(n) either.
+;; if so then d * n/d would be greater than n.
+;; One of these divisors must be smaller than sqrt(n).
+;; If there isn't one below sqrt(n) then there isn't
+;; one bigger than sqrt(n) either.
 (define (get-smallest-divisor n)
   (let loop ((d 2))
     (cond ((> (* d d) n)
@@ -39,46 +40,48 @@
 (define (prime? n)
   (= n (get-smallest-divisor n)))
 
-;; Theta(log(n) primality test.
+;; Fermat's theorem gives a Theta(log(n) primality test.
 ;;
-;; This is a probabilistic test based on
-;; Fermat's little theorem:
+;; Fermat's theorem says that 
 ;;
-;;    If q is prime then a^q = a mod q, a < q.
+;;    if q is prime then a^q = a mod q, a < q.
 ;;
-;; Converse of this is: 
+;; So if q is prime, all the residues 'a' satisfy a^q = a mod q.
 ;;
-;;    If a^q not= a mod q, then q is not prime.
+;; Logical converse of this is: 
 ;;
-;; So we choose many a's from 1 to q-1 and try 
-;; this, if q passes the test the confidence that
-;; q is prime increases.
-
+;;    If a^q is not a mod q for some a<q, then q is not prime.
+;;
+;; If we keep testing these residues, and we find one
+;; for which the condition a^q = a mod q is not true,
+;; then for sure q is NOT prime.
+;;
+;; But what happens if we test all the residues 'a'
+;; from 1 to q-1 and the condition is true for all of them?
+;; The Fermat theorem does NOT tell us that q must be prime.
+;; q may be prime or it may be composite. In fact there
+;; are rare composite numbers (Charmichael numbers) for
+;; which all residues 'a' satisfy the condition.
+;;
+;; The fact that the Charmichael numbers are rare
+;; leads us to a probabilistic prime test. If many a's
+;; pass the Fermat condition then q is probably a prime.
+;;
 ;; We need a fast mod-exponential to evaluate a^q mod q.
-;; Let's write one that's different from the one
-;; given in SICP.
-;;
-;; Computes a^q mod q.
-(define (mod-expt a qq)
-  ;; Note the difference between qq and q. You don't
-  ;; want to take modulus to be q since that is a 
-  ;; state variable that gets updated in this tail
-  ;; recursive implimentation. The modulus is the
-  ;; initial power qq, not the updated powers q.
-  (define (mod-square x) (remainder (* x x) qq))
-  (let loop ((a a) (q qq) (result 1))
-    (cond ((= q 0)
-           result)
-          ((odd? q)
-           (loop a
-                 (sub1 q)
-                 (remainder (* a result) qq)))
-          (else
-           (loop (mod-square a)
-                 (/ q 2)
-                 result)))))
+;; Let's write a tail-recursive one.
 
-;; Compare with SICP version.
+(define (mod-expt a q)
+  (define (mod-square x) (remainder (* x x) q))
+  (let loop ((a a) (qq q) (result 1))
+    (cond ((= qq 0) result)
+          ((odd? qq) (loop a
+                           (- qq 1)
+                           (remainder (* a result) q)))
+          (else (loop (mod-square a)
+                      (/ qq 2)
+                      result)))))
+
+;; Compare with SICP version which is tree-recursive.
 (define (expmod base exp m)
   (define (square x) (* x x))
   (cond ((= exp 0) 1)
@@ -93,22 +96,87 @@
 (check-equal? (mod-expt 640 29) (expmod 640 29 29))
 (check-equal? (mod-expt 110 100) (expmod 110 100 100))
 
-;; Choose a random base a and do the test a^q = a mod q.
-;; For big integers, use random-natural from math/base module.
+;; Choose a random residue 'a' and do the test a^q = a mod q.
+;; For big integers, use random-integer from math/base module:
+;;
+;;   (random-integer a k)
+;;
+;; this returns a random integer n: 1 <= n < k.
 (define (fermat-test q)
-  (let ((a (add1 (random-natural (- q 1)))))
+  (let ((a (random-integer 1 q)))
     (= (mod-expt a q) a)))
 
-;; Do the FT test a certain number of times. If q passes
-;; all these tests it is probably a prime, but if q fails
-;; it is for sure not prime.
+;; Do the Fermat test a certain number of times. If q passes
+;; all these tests it is probably prime, but if q fails it is
+;; for sure not prime.
 (define (ft-prime? q trials)
-  (cond ((= trials 0)
-         true)
-        ((fermat-test q)
-         (ft-prime? q (sub1 trials)))
-        (else
-         false)))
+  (cond ((= trials 0) true)
+        ((fermat-test q) (ft-prime? q (sub1 trials)))
+        (else false)))
+
+(check-true (ft-prime? 641 500) "should be true for prime")
+(check-true (ft-prime? 64111111111111 500) "should be true for big prime")
+(check-false (ft-prime? 1000071 500) "should be false for composite")
+(check-true (ft-prime? 6601 500) "should be fooled by Charmichael")
+(check-false (prime? 6601) "should be false for composite Charmichael")
+
+;; But wait a sec! Do we know how false and true
+;; residues are distributed? What if for some composites,
+;; 99.9999% of the residues will yield true and only a
+;; few yield false? The chance of a false positive is
+;; then pretty high. Doing many trials might not even
+;; help much! We have to convince ourselves that with
+;; each trial, the probability of making a correct
+;; determination goes up.
+
+;; Check the condition a^q = a mod q for all residues a<q
+;; and make a table of results:
+
+(define (fermat-statistics . qs)
+  (displayln
+   (format-table
+    (cons
+     (list "q" "# true" "# false" "% true" "% false")
+     (map (lambda (q)
+            (let loop ((num-a-true 0) (num-a-false 0) (a 1))
+              (if (= a q)
+                  (list (number->string q)
+                        (number->string num-a-true)
+                        (number->string num-a-false)
+                        (format-real (* 100.0 num-a-true (/ (- q 1))) 5)
+                        (format-real (* 100.0 num-a-false (/ (- q 1))) 5))
+                  (if (= (mod-expt a q) a)
+                      (loop (+ num-a-true 1)
+                            num-a-false
+                            (+ a 1))
+                      (loop num-a-true
+                            (+ num-a-false 1)
+                            (+ a 1))))))
+          qs)))))
+
+;; Try it on a prime, a big prime, a Charmichael,
+;; products of 2 and 3 primes, and a highly composite number.
+;;
+;; (fermat-statistics 641
+;;                    5211881
+;;                    6601
+;;                    (* 641 19)
+;;                    (* 41 31 23)
+;;                    (* 2 3 4 5 6 7 8))
+;;
+;;       q |  # true | # false |    % true |  % false
+;;     641 |     640 |       0 | 100.00000 |  0.00000
+;; 5211881 | 5211880 |       0 | 100.00000 |  0.00000
+;;    6601 |    6600 |       0 | 100.00000 |  0.00000
+;;   12179 |       8 |   12170 |   0.06569 | 99.93431
+;;   29233 |     188 |   29044 |   0.64313 | 99.35687
+;;   40320 |      15 |   40304 |   0.03720 | 99.96280
+;;
+;; Well this is good news. Most of the residues are false
+;; when q is composite. If this pattern holds up for all
+;; normal (non-Charmichael) composites then the chance of
+;; getting a false positive after 100 trials is vanishingly
+;; small.
 
 
 ;; Exercise 1.21 ========================================
@@ -201,6 +269,7 @@
        (list 10 11 12 13 14)))
 
 ;; (displayln (prime-time-table *limit-list*))
+;;
 ;;     lower limit                                              primes   msecs
 ;; ---------------------------------------------------------------------------
 ;;     10000000000 |             10000000019, 10000000033, 10000000061 |     9
@@ -338,8 +407,8 @@
 
 ;; Exercise 1.24 ========================================
 
-;; A study of the run times for the fast ft-prime?
-;; Fermat test. The Fermat test has Theta(log n) growth.
+;; A study of the run times for the fast Fermat test.
+;; The Fermat test has Theta(log n) growth.
 ;; Check this for the 12 primes we found above. Is it so?
 ;; If not, can we explain why?
 
@@ -452,4 +521,37 @@
 
 ;; Miller-Rabin test.
 
+
+
+
+;; Try it on the Charmichael numbers!
+
+;; Computes a^q mod q while looking for nontrivial root of 1.
+;; Returns 0 if a^2 = 1
+;; (define (mod-expt-miller-rabin a q)
+;;   (define (mod-square x)
+;;     (remainder (* x x) q))
+;;   (let loop ((a a) (q qq) (result 1))
+;;     (cond ((= qq 0) result)
+;;           ((odd? qq) (loop a
+;;                            (- qq 1)
+;;                            (remainder (* a result) q)))
+;;           (else (let ((a^2 (mod-square a)))
+;;                   (if (and (not (= a 1))
+;;                            (not (- a (- q 1)))
+;;                            (= 1 a^2))
+;;                       0 ;; For sure comparison with a, 1 <= a < q will be false.
+;;                       (loop a^2
+;;                             (/ qq 2)
+;;                             result)))))))
+
+;; (define (miller-rabin-test q)
+;;   (let ((a (random-integer 1 q)))  
+;;     (= (mod-expt-miller-rabin a q) a)))
+
+;; ;; modify this
+;; (define (miller-rabin-prime? q trials)
+;;   (cond ((= trials 0) true)
+;;         ((fermat-test q) (ft-prime? q (- trials 1)))
+;;         (else false)))
 
