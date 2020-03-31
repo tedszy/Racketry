@@ -1,9 +1,8 @@
 ;;; sicp1-2f-primality.rkt
 ;;;
 ;;; Prime testing, divisors, mod exponential, Fermat test,
-;;; performance comparisons, log(n) growth of Fermat test...
-;;;
-;;; ...Charmichael numbers, Miller-Rabin test.
+;;; performance comparisons, log(n) growth of Fermat test,
+;;; Charmichael numbers..
 
 #lang racket
 
@@ -467,7 +466,9 @@
 
 ;; Exercise 1.25 ========================================
 
+
 ;; Exercise 1.26 ========================================
+
 
 ;; Exercise 1.27 ========================================
 
@@ -514,44 +515,29 @@
 ;;          2821 |         #t |       #f
 ;;          6601 |         #t |       #f
 ;;
-;; They indeed fool the Fermat test!
+;; They indeed fool the Fermat test, no matter
+;; how many trials!
 
+;; We might as well try to find the next few
+;; Charmichael numbers (by brute force.)
 
-;; Exercise 1.28 ========================================
+(define (charmichael-search start stop)
+  (let loop ((q start) (result empty))
+    (cond ((= q stop) (reverse result))
+          ((and (fermat-test-all q)
+                (not (prime? q)))
+           (loop (+ q 1)
+                 (cons q result)))
+          (else (loop (+ q 1)
+                      result)))))
 
-;; Miller-Rabin test.
+;; > (charmichael-search 5000 50000)
+;;
+;; '(6601 8911 10585 15841 29341 41041 46657)
+;;
+;; The ratio of Charmichaels to normal numbers
+;; in this range is 0.0156%. But (I read elsewhere)
+;; that the percentage of Charmichaels becomes
+;; smaller and smaller as numbers become larger.
 
-
-
-
-;; Try it on the Charmichael numbers!
-
-;; Computes a^q mod q while looking for nontrivial root of 1.
-;; Returns 0 if a^2 = 1
-;; (define (mod-expt-miller-rabin a q)
-;;   (define (mod-square x)
-;;     (remainder (* x x) q))
-;;   (let loop ((a a) (q qq) (result 1))
-;;     (cond ((= qq 0) result)
-;;           ((odd? qq) (loop a
-;;                            (- qq 1)
-;;                            (remainder (* a result) q)))
-;;           (else (let ((a^2 (mod-square a)))
-;;                   (if (and (not (= a 1))
-;;                            (not (- a (- q 1)))
-;;                            (= 1 a^2))
-;;                       0 ;; For sure comparison with a, 1 <= a < q will be false.
-;;                       (loop a^2
-;;                             (/ qq 2)
-;;                             result)))))))
-
-;; (define (miller-rabin-test q)
-;;   (let ((a (random-integer 1 q)))  
-;;     (= (mod-expt-miller-rabin a q) a)))
-
-;; ;; modify this
-;; (define (miller-rabin-prime? q trials)
-;;   (cond ((= trials 0) true)
-;;         ((fermat-test q) (ft-prime? q (- trials 1)))
-;;         (else false)))
 
