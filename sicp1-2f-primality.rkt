@@ -1,8 +1,10 @@
 ;;; sicp1-2f-primality.rkt
 ;;;
+;;; Exercises 1.21 -- 1.27.
+;;;
 ;;; Prime testing, divisors, mod exponential, Fermat test,
 ;;; performance comparisons, log(n) growth of Fermat test,
-;;; Charmichael numbers..
+;;; Charmichael numbers.
 
 #lang racket
 
