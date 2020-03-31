@@ -9,7 +9,8 @@
 
 (provide format-real
          format-table/simple
-         format-table)
+         format-table
+         format-table/default)
 
 ;; A "table" is a list of lists of strings.
 
@@ -51,6 +52,7 @@
 (define (joinln list-of-strings)
   (string-join list-of-strings "\n"))
 
+;; Deprecated.
 (define (format-table/simple table 
                              #:separator [separator "  "] 
                              #:align [align empty])
@@ -78,15 +80,65 @@
                        (string-join row separator))
                      normalized-table)))))
 
-;;;
-;;; ==================================================
-;;;
-;;; For testing:
+;; Automatically changes cells into strings, with
+;; reasonable defaults.
+(define (format-table/default #:header (header #f)
+                              #:flonum-precision (flonum-precision 5)
+                              body)
+  (define (format-default cell)
+    (if (flonum? cell)
+        (format-real cell flonum-precision)
+        (format "~a" cell)))
+  (if header
+      (format-table #:separator " | "
+                    #:header-char #\-
+                    (cons (map format-default header)
+                          (map (lambda (row)
+                                 (map format-default row))
+                               body)))
+      (format-table #:separator " | "
+                    (map (lambda (row)
+                           (map format-default row))
+                         body))))
+
+
+;; ==================================================
+;;
+;; For testing:
 
 (define tt '(("zarf" "greeblies" "terwilligbert")
              ("1" "2" "3")
              ("10" "20" "30")
              ("100" "200" "300")))
+
+(define tt2 (list (list 1.34219823 pi (log pi 2))
+                  (list 'zarf 'arthur "merlin")
+                  (list 91/53 #f #t)
+                  (list '(1 2 3) "foo" 3.919-2.8734i)))
+
+;; > (displayln (format-table/default tt2))
+
+;; 1.34220 | 3.14159 |       1.65150
+;;    zarf |  arthur |        merlin
+;;   91/53 |      #f |            #t
+;; (1 2 3) |     foo | 3.919-2.8734i
+
+;; > (displayln (format-table/default tt2 #:flonum-precision 2))
+
+;;    1.34 |   3.14 |          1.65
+;;    zarf | arthur |        merlin
+;;   91/53 |     #f |            #t
+;; (1 2 3) |    foo | 3.919-2.8734i
+
+;; > (displayln (format-table/default
+;;               tt2 #:header '("yabba" "dabba" "doo")))
+;;
+;;   yabba     dabba             doo
+;; ---------------------------------
+;; 1.34220 | 3.14159 |       1.65150
+;;    zarf |  arthur |        merlin
+;;   91/53 |      #f |            #t
+;; (1 2 3) |     foo | 3.919-2.8734i
 
 ;; > (displayln (format-table/simple tt)) 
 ;; zarf  greeblies  terwilligbert
