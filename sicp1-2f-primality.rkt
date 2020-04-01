@@ -71,6 +71,7 @@
 ;; We need a fast mod-exponential to evaluate a^q mod q.
 ;; Let's write a tail-recursive one.
 
+;; This does a^q mod q (just what we need for Fermat test.)
 (define (mod-expt a q)
   (define (mod-square x) (remainder (* x x) q))
   (let loop ((a a) (qq q) (result 1))
@@ -83,6 +84,7 @@
                       result)))))
 
 ;; Compare with SICP version which is tree-recursive.
+;; This does base^exp mod m.
 (define (expmod base exp m)
   (define (square x) (* x x))
   (cond ((= exp 0) 1)
