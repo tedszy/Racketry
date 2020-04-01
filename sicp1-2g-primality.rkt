@@ -22,14 +22,21 @@
 ;;    that if such a nontrivial square root of 1 exists, 
 ;;    then n is not prime. It is also possible to prove that if 
 ;;    n is an odd number that is not prime, then, for at least
-;;    half the numbers a < n, computing a n−1 in this way will
+;;    half the numbers a < n, computing a^(n−1) in this way will
 ;;    reveal a nontrivial square root of 1 modulo n."
 ;;
-;; We will show that this is not true.
-
-
-
-
+;; This is not true. What SICP meant to say is...
+;;
+;;    'if n is an odd number that is not prime, then,
+;;     for at least half the numbers a < n, computing a^(n-1)
+;;     this way (direct-recursion expmod with non-trivial square
+;;     root of 1 check) will reveal that n is composite.'
+;;
+;; Sometimes this process of demonstrating that n is composite
+;; uncovers a nontrivial square root, sometimes it does not!
+;;
+;; Let's see why sometimes it does not reveal a root of 1,
+;; no matter what residue 'a' is chosen.
 
 (define (non-trivial-root? a n)
   (and (not (= a 1))
@@ -46,35 +53,26 @@
             (loop count
                   (+ a 1))))))
 
-;; 1000008 has 62 nontrivial roots of 1.
-
 (define (non-trivial-roots-table)
+  (define (make-row type number)
+    (list type number (non-trivial-root-count number)))
   (displayln
    (format-table/default
     #:header '("type" "n" "# non-trivial roots")
-    (list (list "prime" 641 (non-trivial-root-count 641))
-          (list "power of prime"
-                (* 11 11 11)
-                (non-trivial-root-count (* 11 11 11)))
-          (list "2x power of prime"
-                (* 2 7 7 7 7)
-                (non-trivial-root-count (* 2 7 7 7 7)))
-          (list "product of distinct primes"
-                (* 11 13 23)
-                (non-trivial-root-count (* 11 13 23)))
-          (list "factorial"
-                (* 2 3 4 5 6 7 8)
-                (non-trivial-root-count (* 2 3 4 5 6 7 8)))))))
+    (list (make-row "prime" 641)
+          (make-row "power of prime" (* 7 7 7 7 7 7))
+          (make-row "product of distinct primes" (* 3 7 5 11 13 23))
+          (make-row "charmichael" 6601)))))
 
 ;; > (non-trivial-roots-table)
 ;;
-;;                       type       n   # non-trivial roots
-;; --------------------------------------------------------
-;;                      prime |   641 |                   0
-;;             power of prime |  1331 |                   0
-;;          2x power of prime |  4802 |                   0
-;; product of distinct primes |  3289 |                   6
-;;                  factorial | 40320 |                  30
+;;                       type        n   # non-trivial roots
+;; ---------------------------------------------------------
+;;                      prime |    641 |                   0
+;;             power of prime | 117649 |                   0
+;; product of distinct primes | 345345 |                  62
+;;                charmichael |   6601 |                   6
+
 
 
 
@@ -84,6 +82,17 @@
 ;; Does a^2 mod n.
 (define (mod-square a n)
   (modulo (* a a) n))
+
+(define (fast-mod-expt a q n)
+  (define (mod-square x) (modulo (* x x) n))
+  (let loop ((a a) (q q) (result 1))
+    (cond ((= q 0) result)
+          ((odd? q) (loop a
+                           (- q 1)
+                           (modulo (* a result) n)))
+          (else (loop (mod-square a)
+                      (/ q 2)
+                      result)))))
 
 ;; Factor n-1 = 2^e * k where k is odd.
 ;; Compute a^k mod n by fast exponentiation.
@@ -106,16 +115,17 @@
 
 (define (expmod base exp m)
   (define (square x)
-    (let ((foo (remainder (* x x) m)))
-      (displayln foo)
-      foo))
+    (displayln x)
+    (remainder (* x x) m))
   (cond ((= exp 0) 1)
         ((even? exp)
          (remainder (square (expmod base (/ exp 2) m)) m))
         (else 
          (remainder (* base (expmod base (sub1 exp) m)) m))))
 
-
+(define (run a n)
+  (printf "~a*\n" (expmod a (- n 1) n))
+  (miller-rabin-sequence a n))
 
 
 
