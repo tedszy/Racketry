@@ -36,7 +36,9 @@
 ;; uncovers a nontrivial square root, sometimes it does not!
 ;;
 ;; Let's see why sometimes it does not reveal a root of 1,
-;; no matter what residue 'a' is chosen.
+;; no matter what residue 'a' is chosen. Let's find all the
+;; non-trivial roots of 1 for some interesting odd numbers
+;; and arrange the results in a table.
 
 (define (non-trivial-root? a n)
   (and (not (= a 1))
@@ -72,6 +74,64 @@
 ;;             power of prime | 117649 |                   0
 ;; product of distinct primes | 345345 |                  62
 ;;                charmichael |   6601 |                   6
+;;
+;; Ah, notice that the power of a prime, 7^6, does not hae
+;; any non-trivial roots! So what SICP said can't possibly
+;; be true: there exist numbers for which no computations
+;; with any residue 'a' can reveal a non-trivial root... for
+;; the simple fact that such numbers have none to reveal!
+;;
+;; It is easy to show that a prime has no non-trivial roots.
+;; If x is a root of 1 mod p then
+;;
+;;    x^2 = 1 mod p, or... x^2 - 1 = 0 mod p.
+;;
+;; Factoring this,
+;;
+;;    (x + 1)*(x - 1) = 0 mod p.
+;;
+;; This means that p divides the left-hand side. But since p
+;; is prime, it must divide one of the two factors: either
+;; p | (x + 1) or p | (x - 1). (Exercise: explain why it can't
+;; be both!) So,
+;;
+;;   x + 1 = 0 mod p, or x - 1 = 0 mod p.
+;;
+;; and either x = 1 or x = -1 mod p. There are no non-trivial
+;; roots.
+;;
+;; It can be shown that if n is a power of an odd prime then it
+;; also has no non-trivial roots. (Likewise if n is two times
+;; a power of an odd prime -- but that's even.) So there do exist
+;; odd numbers which are composite, yet have no non-trivial roots.
+;; The Miller-Rabin test isn't fooled by them (we shall see why),
+;; so what SICP says about non-trivial roots can't be true.
+;;
+;; So then, if n is prime, n will have no non-trivial roots.
+;; the logical negation of this is...
+;;
+;;    if n has a non-trivial root of 1, then n is composite.
+;;
+;; A-ha! This gives us an idea for a new kind of prime test!
+;; All we have to do is rummage through residues 'a' in the
+;; non-trivial range 2 < a < n-1, looking for square roots of 1.
+;; And if we find one, we have proved that n is composite!
+;;
+;; But this idea doesn't work. Look at the table above.
+;; More experiments with odd composites show that the typical
+;; odd number has very few non-trivial roots. It's not practical
+;; to do many random trials hoping to run into one. For very
+;; large numbers it would be computationally impossible.
+;;
+;; However, the general idea would be a good one, if there exists
+;; some mathematical way of predicting where these roots should be.
+;; This concept is the basis of the Euler prime test and the
+;; Miller-Rabin prime test.
+
+
+
+
+
 
 
 
@@ -102,8 +162,8 @@
     (if (odd? k)
         (let ((a^k (fast-mod-expt a k n)))
           (let loop2 ((x a^k) (j 0) (result empty))
-            (if (> j e)
-                (reverse result)
+            (if (= j e)
+                (reverse (cons x (cons '==> result)))
                 (loop2 (mod-square x n)
                        (+ j 1)
                        (cons (if (= x (- n 1))
@@ -112,23 +172,43 @@
                              result)))))
         (loop (+ e 1) (/ k 2)))))
 
-
-(define (expmod base exp m)
-  (define (square x)
-    (displayln x)
-    (remainder (* x x) m))
-  (cond ((= exp 0) 1)
-        ((even? exp)
-         (remainder (square (expmod base (/ exp 2) m)) m))
-        (else 
-         (remainder (* base (expmod base (sub1 exp) m)) m))))
+(define (expmod-traced base exp m)
+  (define sequence empty)
+  (define (expmod base exp m)
+    (define (square x)
+      (set! sequence (cons (if (= x (- m 1)) -1 x) sequence))
+      (remainder (* x x) m))
+    (cond ((= exp 0) 1)
+          ((even? exp)
+           (remainder (square (expmod base (/ exp 2) m)) m))
+          (else 
+           (remainder (* base (expmod base (sub1 exp) m)) m))))
+  (reverse (cons (expmod base exp m)
+                 (cons '==> sequence))))
 
 (define (run a n)
-  (printf "~a*\n" (expmod a (- n 1) n))
-  (miller-rabin-sequence a n))
+  (printf "~a\n" (expmod-traced a (- n 1) n))
+  (printf "~a\n" (miller-rabin-sequence a n)))
 
+(run 29 5881) ;; 5881 is prime.
+(run 29 46657) ;; 11 also
 
+;; Strictly speaking, 
+;; Miller Rabin sequence always looks like
+;; (* * * * * ... ==> 1)
 
+;; The check for non-trivial roots combined with
+;; Fermat test check is equivalent to Miller-Rabin test.
+
+;;  (* * * * * * * ==> 1)
+;;  all stars not 1,-1
+;;  composite by miller-rabin
+;;  last star is a root of 1, by SICP algo, therefore composite.
+
+;;  (* * * * * * * ==> *)
+;;  all stars not 1,-1
+;;  composite by miller-rabin.
+;;  fails fermat test, by SICP algo, therefore composite.
 
 
 
