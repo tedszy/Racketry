@@ -137,28 +137,24 @@
 
 (define (fermat-statistics . qs)
   (displayln
-   (format-table
-    (cons
-     (list "q" "# true" "# false" "% true" "% false")
-     (map (lambda (q)
-            (let loop ((num-a-true 0) (num-a-false 0) (a 1))
-              (if (= a q)
-                  (list (number->string q)
-                        (number->string num-a-true)
-                        (number->string num-a-false)
-                        (format-real (* 100.0 num-a-true (/ (- q 1))) 5)
-                        (format-real (* 100.0 num-a-false (/ (- q 1))) 5))
-                  (if (= (mod-expt a q) a)
-                      (loop (+ num-a-true 1)
-                            num-a-false
-                            (+ a 1))
-                      (loop num-a-true
-                            (+ num-a-false 1)
-                            (+ a 1))))))
-          qs)))))
+   (format-table/default
+    #:header (list "q" "# true" "# false" "% true" "% false")
+    (map (lambda (q)
+           (let loop ((num-a-true 0) (num-a-false 0) (a 1))
+             (if (= a q)
+                 (list q
+                       num-a-true
+                       num-a-false
+                       (* 100.0 num-a-true (/ (- q 1)))
+                       (* 100.0 num-a-false (/ (- q 1))))
+                 (if (= (mod-expt a q) a)
+                     (loop (+ num-a-true 1) num-a-false (+ a 1))
+                     (loop num-a-true (+ num-a-false 1) (+ a 1))))))
+         qs))))
 
 ;; Try it on a prime, a big prime, a Charmichael,
 ;; products of 2 and 3 primes, and a highly composite number.
+;; It takes some time to run.
 ;;
 ;; (fermat-statistics 641
 ;;                    5211881
@@ -217,17 +213,19 @@
 ;; lower N times.
 ;;
 ;; Computers are a lot faster these days so we must use much
-;; larger N to get measurable milliseconds:
+;; larger limits to get measurable milliseconds:
 ;;
 ;;   N = 10^11, 10^12, 10^13.
 ;;
 ;; SICP wants me to skip over even numbers since they 
 ;; cannot be prime. Also, we want to refactor this problem 
-;; in such a way as to work with simple-table:
+;; in such a way as to work with format-table:
 ;;
 ;; (first-three-primes-larger-than (expt 10 12))
+;;
 ;; ==> '((1000000000039 33) (1000000000061 29) (1000000000063 29))
-;; Gives a list of the found primes and their computation times.
+;;
+;; gives a list of the found primes and their computation times.
 (define (first-three-primes-larger-than N)
   (let loop ((N (if (even? N) (add1 N) (+ N 2))) 
              (count 0) 
@@ -248,47 +246,59 @@
                  result)))))
 
 ;; Aggregate the results into a table.
-;; 
-;;   limit       primes       milliseconds
-;;
-(define (prime-time-table limit-list)
-  (format-table #:header-char #\-
-                #:separator " | "
-               (cons (list "lower limit" "primes" "msecs")
-                     (map (lambda (N)
-                            (let ((row (first-three-primes-larger-than N)))
-                              (list
-                               (number->string N)
-                               (string-join (map (lambda (u)
-                                                   (number->string (car u)))
-                                                 row)
-                                            ", ")
-                               (number->string (apply + (map cadr row))))))
-                          limit-list))))
 
-(define *limit-list* 
-  (map (lambda (e) 
-         (expt 10 e))
-       (list 10 11 12 13 14)))
+(define (prime-time-table)
+  (define limits 
+    (map (lambda (e) 
+           (expt 10 e))
+         (list 10 11 12 13 14)))
+  (displayln
+   (format-table/default
+    #:header (list  "lower limit" "primes > lower limit" "time ms")
+    (map (lambda (limit)
+           (let ((row (first-three-primes-larger-than limit)))
+             (list limit
+                   (map (lambda (u)
+                          (car u))
+                        row)
+                   (apply + (map cadr row)))))
+         limits))))
 
-;; (displayln (prime-time-table *limit-list*))
+;; (prime-time-table)
 ;;
-;;     lower limit                                              primes   msecs
-;; ---------------------------------------------------------------------------
-;;     10000000000 |             10000000019, 10000000033, 10000000061 |     9
-;;    100000000000 |          100000000003, 100000000019, 100000000057 |    28
-;;   1000000000000 |       1000000000039, 1000000000061, 1000000000063 |    88
-;;  10000000000000 |    10000000000037, 10000000000051, 10000000000099 |   282
-;; 100000000000000 | 100000000000031, 100000000000067, 100000000000097 |   891
+;;     lower limit                                primes > lower limit   time ms
+;; -----------------------------------------------------------------------------
+;;     10000000000 |             (10000000019 10000000033 10000000061) |       5
+;;    100000000000 |          (100000000003 100000000019 100000000057) |      15
+;;   1000000000000 |       (1000000000039 1000000000061 1000000000063) |      45
+;;  10000000000000 |    (10000000000037 10000000000051 10000000000099) |     134
+;; 100000000000000 | (100000000000031 100000000000067 100000000000097) |     422
 ;;
 ;; Now, sqrt(10) ~ 3.16 and we see...
-;;    
-;;      9 * 3.16 =  28.44
-;;     28 * 3.16 =  88.48
-;;     88 * 3.16 = 278.08
-;;    282 * 3.16 = 891.12
 ;;
-;; which are very close to the observed times!
+;;    1.6   * 3.16 = 5.006
+;;    5.006 * 3.16 = 15.82
+;;    15.82 * 3.16 = 46
+;;    46    * 3.16 = 145
+;;    145   * 3.16 = 458
+;;
+;; which are not too far off the the observed times!
+;; Another way to look at this is..
+;;
+;;    15 / 5    = 3
+;;    45 / 15   = 3
+;;    134 / 45  = 2.98
+;;    422 / 134 = 3.15
+;;
+;; All roughly close to sqrt(10).
+
+;; Let's keep these 12 big primes.
+
+(define our-12-big-primes
+  (list 10000000019 10000000033 10000000061 100000000003 100000000019
+        100000000057 1000000000039 1000000000061 1000000000063
+        10000000000037 10000000000051 10000000000099 100000000000031
+        100000000000067 100000000000097))
 
 
 ;; Exercise 1.23 ========================================
@@ -338,42 +348,39 @@
 (define (time-table-123 timed-prime-predicate-A
                         timed-prime-predicate-B . my-primes)
   (displayln
-   (format-table
-    (cons (list "p" "prime test A" "prime test B" "ratio A/B")
-          (map (lambda (p)
-                 (let-values (((timeA resultA) (timed-prime-predicate-A p))
-                              ((timeB resultB) (timed-prime-predicate-B p)))
-                   (list (format "~a" p)
-                         (format "~a ~ams" resultA timeA)
-                         (format "~a ~ams" resultB timeB)
-                         (format-real (/ timeA timeB 1.0) 2))))
-               my-primes)))))
+   (format-table/default
+    #:flonum-precision 2
+    #:header (list "p" "prime test A" "prime test B" "ratio A/B")
+    (map (lambda (p)
+           (let-values (((timeA resultA) (timed-prime-predicate-A p))
+                        ((timeB resultB) (timed-prime-predicate-B p)))
+             (list p
+                   (format "~a ~ams" resultA timeA)
+                   (format "~a ~ams" resultB timeB)
+                   (/ timeA timeB 1.0))))
+         my-primes))))
 
 ;; Applying this to the 12 big primes we discovered earlier...
 ;;
-;; > (time-table-123 prime-time-1 prime-time-2
-;;                  10000000019 10000000033 10000000061
-;;                  100000000003 100000000019 100000000057
-;;                  1000000000039 1000000000061 1000000000063
-;;                  10000000000037 10000000000051 10000000000099
-;;                  100000000000031 100000000000067 100000000000097)
+;; (apply time-table-123 prime-time-1 prime-time-2
+;;        our-12-big-primes)
 ;;
 ;;               p | prime test A | prime test B | ratio A/B
-;;     10000000019 |       #t 1ms |       #t 1ms |  1.00
-;;     10000000033 |       #t 2ms |       #t 1ms |  2.00
-;;     10000000061 |       #t 2ms |       #t 1ms |  2.00
-;;    100000000003 |       #t 5ms |       #t 3ms |  1.67
-;;    100000000019 |       #t 5ms |       #t 3ms |  1.67
-;;    100000000057 |       #t 5ms |       #t 3ms |  1.67
-;;   1000000000039 |      #t 14ms |      #t 10ms |  1.40
-;;   1000000000061 |      #t 14ms |      #t 10ms |  1.40
-;;   1000000000063 |      #t 14ms |       #t 9ms |  1.56
-;;  10000000000037 |      #t 45ms |      #t 31ms |  1.45
-;;  10000000000051 |      #t 43ms |      #t 31ms |  1.39
-;;  10000000000099 |      #t 44ms |      #t 31ms |  1.42
-;; 100000000000031 |     #t 141ms |      #t 97ms |  1.45
-;; 100000000000067 |     #t 140ms |      #t 98ms |  1.43
-;; 100000000000097 |     #t 140ms |      #t 97ms |  1.44
+;;     10000000019 |       #t 1ms |       #t 1ms |      1.00
+;;     10000000033 |       #t 2ms |       #t 1ms |      2.00
+;;     10000000061 |       #t 2ms |       #t 1ms |      2.00
+;;    100000000003 |       #t 5ms |       #t 3ms |      1.67
+;;    100000000019 |       #t 5ms |       #t 3ms |      1.67
+;;    100000000057 |       #t 5ms |       #t 3ms |      1.67
+;;   1000000000039 |      #t 14ms |      #t 10ms |      1.40
+;;   1000000000061 |      #t 14ms |      #t 10ms |      1.40
+;;   1000000000063 |      #t 14ms |       #t 9ms |      1.56
+;;  10000000000037 |      #t 45ms |      #t 31ms |      1.45
+;;  10000000000051 |      #t 43ms |      #t 31ms |      1.39
+;;  10000000000099 |      #t 44ms |      #t 31ms |      1.42
+;; 100000000000031 |     #t 141ms |      #t 97ms |      1.45
+;; 100000000000067 |     #t 140ms |      #t 98ms |      1.43
+;; 100000000000097 |     #t 140ms |      #t 97ms |      1.44
 ;;
 ;; Can we explain why the ratio is 1.44 and not 2?
 ;;
@@ -400,9 +407,10 @@
 
 ;; Check it on a bigger prime.
 ;;
-;; > (time-table-123 prime-time-1 prime-time-3 1000000000000091)
+;; (time-table-123 prime-time-1 prime-time-3 1000000000000091)
 ;;
-;;                p | prime test A | prime test B | ratio A/B
+;;                p   prime test A   prime test B   ratio A/B
+;; ----------------------------------------------------------
 ;; 1000000000000091 |     #t 449ms |     #t 220ms |      2.04
 ;;
 ;; Yes! Now the ratio is close enough to 2!
@@ -415,50 +423,49 @@
 ;; Check this for the 12 primes we found above. Is it so?
 ;; If not, can we explain why?
 
-;; It's convenient it is to have this higher order function!
-(define ft-prime-time (make-prime-test-timer
-                       (lambda (p)
-                         (ft-prime? p 10000))))
+;; It's convenient it is to have this make-prime-test-timer
+;; higher order function!
+(define ft-prime-time
+  (make-prime-test-timer
+   (lambda (p)
+     (ft-prime? p 10000))))
 
 (define (another-time-table timed-prime-predicate . my-primes)
   (displayln
-   (format-table
-    (cons (list "prime" "ft results" "time/log(prime)")
-          (map (lambda (p)
-                 (let-values (((runtime result)
-                               (timed-prime-predicate p)))
-                   (list (number->string p)
-                         (format "~a ms, ~a" runtime result)
-                         (format-real (/ runtime (log p 10)) 7))))
-               my-primes)))))
+   (format-table/default
+    #:header (list "prime" "ft results" "time/log(prime)")
+    #:flonum-precision 7
+    (map (lambda (p)
+           (let-values (((runtime result) (timed-prime-predicate p)))
+             (list p
+                   (format "~a ms, ~a" runtime result)
+                   (/ runtime (log p 10)))))
+         my-primes))))
 
-;; (another-time-table ft-prime-time
-;;                     10000000019 10000000033 10000000061
-;;                     100000000003 100000000019 100000000057
-;;                     1000000000039 1000000000061 1000000000063
-;;                     10000000000037 10000000000051 10000000000099
-;;                     100000000000031 100000000000067 100000000000097)
+;; (apply another-time-table ft-prime-time
+;;        our-12-big-primes)
 ;;
 ;; Running this a few times and dropping results which
 ;; have anomalously long times (I assume it's garbage
 ;; collection), we get...
 ;;
 ;;           prime | ft results | time/log(prime)
-;;     10000000019 | 144 ms, #t | 14.4000000
-;;     10000000033 | 111 ms, #t | 11.1000000
-;;     10000000061 | 115 ms, #t | 11.5000000
-;;    100000000003 | 149 ms, #t | 13.5454545
-;;    100000000019 | 150 ms, #t | 13.6363636
-;;    100000000057 | 155 ms, #t | 14.0909091
-;;   1000000000039 | 156 ms, #t | 13.0000000
-;;   1000000000061 | 160 ms, #t | 13.3333333
-;;   1000000000063 | 163 ms, #t | 13.5833333
-;;  10000000000037 | 167 ms, #t | 12.8461538
-;;  10000000000051 | 170 ms, #t | 13.0769231
-;;  10000000000099 | 170 ms, #t | 13.0769231
-;; 100000000000031 | 187 ms, #t | 13.3571429
-;; 100000000000067 | 182 ms, #t | 13.0000000
-;; 100000000000097 | 182 ms, #t | 13.0000000
+;; ----------------------------------------------
+;;     10000000019 | 144 ms, #t |      14.4000000
+;;     10000000033 | 111 ms, #t |      11.1000000
+;;     10000000061 | 115 ms, #t |      11.5000000
+;;    100000000003 | 149 ms, #t |      13.5454545
+;;    100000000019 | 150 ms, #t |      13.6363636
+;;    100000000057 | 155 ms, #t |      14.0909091
+;;   1000000000039 | 156 ms, #t |      13.0000000
+;;   1000000000061 | 160 ms, #t |      13.3333333
+;;   1000000000063 | 163 ms, #t |      13.5833333
+;;  10000000000037 | 167 ms, #t |      12.8461538
+;;  10000000000051 | 170 ms, #t |      13.0769231
+;;  10000000000099 | 170 ms, #t |      13.0769231
+;; 100000000000031 | 187 ms, #t |      13.3571429
+;; 100000000000067 | 182 ms, #t |      13.0000000
+;; 100000000000097 | 182 ms, #t |      13.0000000
 ;;
 ;; The fit is pretty good for large primes. time/log(prime)
 ;; is roughly constant. So we can conclude that the computation
@@ -499,19 +506,18 @@
 (define (charmichael-table)
   (let ((charmichaels (list 561 1105 1729 2465 2821 6601)))
     (displayln
-     (format-table
-      (cons (list "charmichael q" "FT all a<q" "prime? q")
-            (map (lambda (q)
-                   (map (lambda (x)
-                          (format "~a" x))
-                        (list q
-                              (fermat-test-all q)
-                              (prime? q))))
-                 charmichaels))))))
+     (format-table/default
+      #:header (list "charmichael q" "FT all a<q" "prime? q") 
+      (map (lambda (q)
+             (list q
+                   (fermat-test-all q)
+                   (prime? q)))
+           charmichaels)))))
 
-;; > (charmichael-table)
+;; (charmichael-table)
 ;;
-;; charmichael q | FT all a<q | prime? q
+;; charmichael q   FT all a<q   prime? q
+;; ----------------------------------------
 ;;           561 |         #t |       #f
 ;;          1105 |         #t |       #f
 ;;          1729 |         #t |       #f
@@ -535,9 +541,9 @@
           (else (loop (+ q 1)
                       result)))))
 
-;; > (charmichael-search 5000 50000)
+;; (charmichael-search 5000 50000)
 ;;
-;; '(6601 8911 10585 15841 29341 41041 46657)
+;; ==> '(6601 8911 10585 15841 29341 41041 46657)
 ;;
 ;; The ratio of Charmichaels to normal numbers
 ;; in this range is 0.0156%. But (I read elsewhere)
