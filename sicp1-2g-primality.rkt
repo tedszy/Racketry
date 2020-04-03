@@ -11,6 +11,9 @@
          math/base
          "format-table.rkt")
 
+;; 1. Introduction.
+;; ================
+
 ;; SICP pg.74 says...
 ;;
 ;;    "...we pick a random number a < n and raise a to the 
@@ -40,10 +43,13 @@
 ;; non-trivial roots of 1 for some interesting odd numbers
 ;; and arrange the results in a table.
 
+(define (mod-square a n)
+  (modulo (* a a) n))
+
 (define (non-trivial-root? a n)
-  (and (not (= a 1))
-       (not (= a (- n 1)))
-       (= (modulo (* a a) n) 1)))
+  (and (not (= (modulo a n) 1))
+       (not (= (modulo a n) (- n 1)))
+       (= (mod-square a n) 1)))
 
 (define (non-trivial-root-count n)
   (let loop ((count 0) (a 2))
@@ -128,49 +134,251 @@
 ;; This concept is the basis of the Euler prime test and the
 ;; Miller-Rabin prime test.
 
+;; 2. The Miller-Rabin Sequence.
+;; =============================
 
+;; Suppose n is an odd prime. By Fermat's little theorem,
+;; it must be that
+;;
+;;    a^n = a mod n
+;;
+;; for all residues 1 <= a < n-1. We can also write this as
+;;
+;;    a^(n-1) = 1 mod n, for all 1<=a<n-1
+;;
+;; Because n-1 is an even number (because we assumed that
+;; n is an odd prime), we can factor n-1 an odd part k
+;; and powers of 2:
+;;
+;;   n-1 = k*2^e
+;;
+;; for some k, some e. Now by Fermat's theorem, it must be that
+;;
+;;   a^(k*2^e) = 1
+;;
+;; mod n of course. But this means that
+;;
+;;   (... ( ( a^k )^2 )^2 ...)^2 = 1.
+;;
+;; So if you think about this a bit, there MUST BE a square root of 1
+;; somewhere in this sequence:
+;;
+;;   a^k, (a^k)^2, ((a^k)^2)^2, ... (a^k)^(2^(e-1))
+;;
+;; because how else are you going to get a 1 on the right-hand side
+;; of Fermat's theorem when all the terms of this sequence are
+;; successive squares? 
+;;
+;; If n is prime then the roots in this sequence must be trivial.
+;; And if we discover a nontrivial root in this sequence... well
+;; that must mean that our n is not prime.
+;;
+;; This is called the Miller-Rabin Sequence.
 
-
-
-
-
-
-
-
-;; Use modulo rather than remainder.
-
-;; Does a^2 mod n.
-(define (mod-square a n)
-  (modulo (* a a) n))
+;; Display n-1 mod n as -1.
+(define (prettify-residue a n)
+    (if (= a (- n 1)) -1 a))
 
 (define (fast-mod-expt a q n)
-  (define (mod-square x) (modulo (* x x) n))
   (let loop ((a a) (q q) (result 1))
-    (cond ((= q 0) result)
-          ((odd? q) (loop a
-                           (- q 1)
-                           (modulo (* a result) n)))
-          (else (loop (mod-square a)
-                      (/ q 2)
-                      result)))))
+    (cond ((= q 0)
+           result)
+          ((odd? q)
+           (loop a (- q 1) (modulo (* a result) n)))
+          (else
+           (loop (mod-square a n) (/ q 2) result)))))
 
-;; Factor n-1 = 2^e * k where k is odd.
-;; Compute a^k mod n by fast exponentiation.
-;; Miller-rabin sequence is a^k, (a^k)^2, (a^k)^4, ... mod n.
-(define (miller-rabin-sequence a n)
-  (let loop ((e 0) (k (- n 1)))
+(define (miller-rabin-sequence a n)  
+  (let loop-over-powers-of-2 ((e 0) (k (- n 1)))
     (if (odd? k)
         (let ((a^k (fast-mod-expt a k n)))
-          (let loop2 ((x a^k) (j 0) (result empty))
+          (let loop-MR-sequence ((x a^k) (j 0) (result empty))
             (if (= j e)
-                (reverse (cons x (cons '==> result)))
-                (loop2 (mod-square x n)
-                       (+ j 1)
-                       (cons (if (= x (- n 1))
-                                 -1
-                                 x)
-                             result)))))
-        (loop (+ e 1) (/ k 2)))))
+                (reverse result)
+                (loop-MR-sequence (mod-square x n)
+                                  (+ j 1)
+                                  (cons (prettify-residue x n) result)))))
+        (loop-over-powers-of-2 (+ e 1) (/ k 2)))))
+
+;; Some examples of Miller-Rabin sequences.
+;;
+;; (miller-rabin-sequence 17 641)
+;; ==> '(42 482 282 40 318 487 -1)
+;; 
+;; (miller-rabin-sequence 92 281317)
+;; ==> '(1 1)
+;;
+;; (miller-rabin-sequence 29 5881)
+;; ==> '(-1 1 1)
+;;
+;; 641, 281317 and 5881 are prime and in every case the sequence
+;; has to contain a non-trivial root (and it does).
+
+;; 3. The Miller-Rabin Test.
+;; =============================
+
+;; If n is prime then a^(n-1) = 1 mod n. Or,
+;;
+;;    a^(n-1) - 1 = 0 mod n.
+;;
+;; Or, using the factoring: n-1 = k*2^e where k is odd,
+;;
+;;    a^(k*2^e) - 1 = 0.
+;;
+;; Or, again,
+;;
+;;    (a^k)^(2^e) - 1 = 0 mod n
+;;
+;; and now it's clear that this can be repeatedly factored
+;; as differences of squares. If we do it carefully, we get:
+;;
+;; (a^k - 1)*(a^k + 1)*(a^(k*2) + 1)*(a^(k*2^2) + 1)*...*(a^(k*2^(e-1)) + 1 = 0
+;;
+;; Since this is 0 mod n, one of the factors on the left-hand
+;; side must be divisible by n. So it must be that...
+;;
+;;    either           a^k - 1 = 0
+;;    or               a^k + 1 = 0
+;;    or           a^(k*2) + 1 = 0
+;;    or                      ...
+;;    or     a^(k*2^(e-1)) + 1 = 0  (all mod n)
+;;
+;; In other words,
+;;
+;;    if n is prime then
+;;    either            a^k =  1
+;;    or                a^k = -1
+;;    or            (a^k)^2 = -1
+;;    or        (a^k)^(2^2) = -1
+;;    or                   ...
+;;    or     (a^k)^(2^(e-1) = -1  (all mod n)
+;;
+;; In other words again,
+;;
+;;    if n is prime then the either the first term
+;;    of the Miller-Rabin sequence is 1 or any term
+;;    of the Miller-Rabin sequence is -1.
+;;
+;; The logical negation of this is:
+;;
+;;   if the first term of the Miller-Rabin sequence
+;;   is not 1, and none of the terms of the Miller-Rabin
+;;   sequence are -1 (mod n), then n IS COMPOSITE.
+;;
+;; If the choice of 'a' gives a sequence that passes
+;; this condition, then we can call 'a' a "composite witness".
+;; It proves that n is composite. 
+
+(define (miller-rabin-composite-witness? sequence)
+  (and (not (= (car sequence) 1))
+       (andmap (lambda (u)
+                 (not (= u -1)))
+               sequence)))
+
+;; Now let's put together a table for a given odd n. We will
+;; examine each nontrivial 'a'. Is it a composite witness?
+;; Does the Miller-Rabin sequence have a non-trivial square
+;; root of 1? And while we are at it we compute the fermat
+;; value a^(n-1) which is just the square of the last term
+;; of the Miller-Rabin sequence.
+
+(define (has-nontrivial-root? sequence n)
+  (let loop ((seq sequence))
+    (cond ((null? seq)
+           #f)
+          ((non-trivial-root? (car seq) n)
+           (car seq))
+          (else
+           (loop (cdr seq))))))
+
+(define (fermat-value sequence n)
+  (mod-square (car (reverse sequence)) n))
+
+(define (MR-table n)
+  (displayln
+   (format-table/default
+    #:header (list "a" "MR sequence" "witness?" "has NT root?" "Fermat value")
+    (for/list ((a (range 2 (- n 1))))
+      (let ((seq (miller-rabin-sequence a n)))
+        (list a
+              seq
+              (miller-rabin-composite-witness? seq)
+              (has-nontrivial-root? seq n)
+              (fermat-value seq n)))))))
+
+;; Consider odd n = 21.
+;;
+;; (MR-table 21)
+;;
+;;  a   MR sequence   witness?   has NT root?   Fermat value
+;; ---------------------------------------------------------
+;;  2 |     (11 16) |     True |        False |            4
+;;  3 |     (12 18) |     True |        False |            9
+;;  4 |      (16 4) |     True |        False |           16
+;;  5 |     (17 16) |     True |        False |            4
+;;  6 |      (6 15) |     True |        False |           15
+;;  7 |       (7 7) |     True |        False |            7
+;;  8 |       (8 1) |     True |            8 |            1
+;;  9 |      (18 9) |     True |        False |           18
+;; 10 |      (19 4) |     True |        False |           16
+;; 11 |       (2 4) |     True |        False |           16
+;; 12 |       (3 9) |     True |        False |           18
+;; 13 |      (13 1) |     True |           13 |            1
+;; 14 |      (14 7) |     True |        False |            7
+;; 15 |     (15 15) |     True |        False |           15
+;; 16 |      (4 16) |     True |        False |            4
+;; 17 |       (5 4) |     True |        False |           16
+;; 18 |      (9 18) |     True |        False |            9
+;; 19 |     (10 16) |     True |        False |            4
+;;
+;; All of the 'a' in the non-trivial range are witnesses
+;; that prove n is composite. Yet only two of them, 8 and 13,
+;; have non-trivial roots in their Miller-Rabin sequences.
+;;
+;; Let's look at an n=65. It has a few residues which are
+;; not composite witnesses.
+;;
+;;  (MR-table 65)
+;;
+;;  a           MR sequence   witness?   has NT root?   Fermat value
+;; -----------------------------------------------------------------
+;;  2 |   (2 4 16 61 16 61) |     True |        False |           16
+;;  3 |   (3 9 16 61 16 61) |     True |        False |           16
+;;  4 |  (4 16 61 16 61 16) |     True |        False |           61
+;;  5 |  (5 25 40 40 40 40) |     True |        False |           40
+;;  6 |  (6 36 61 16 61 16) |     True |        False |           61
+;;  7 |  (7 49 61 16 61 16) |     True |        False |           61
+;;  8 |      (8 -1 1 1 1 1) |    False |        False |            1
+;;  9 |  (9 16 61 16 61 16) |     True |        False |           61
+;; ...                  ...        ...            ...            ...
+;;
+;; The table is big so I cut most of it out. 8, 18, 47 and 57
+;; are not composite witnesses. The others from 2 to 63 are.
+;; Only two choices for 'a'  reveal non-trivial roots of 1
+;; in their associated Miller-Rabin sequences.
+;;
+;; The following is not too hard to prove:
+;;
+;;    If n is an odd composite then more than 50% of
+;;    the residues a in the non-trivial range 2 <= a <= n-2 
+;;    are Miller-Rabin composite witnesses.
+;;
+;; And that is what SICP means when they say the Miller-Rabin
+;; test "can't be fooled". 
+;;
+;; But can it be that the tree-recursive expmod function
+;; somehow finds these few non-trivial roots for more than
+;; half the 'a's? No, because as we shall see by tracing
+;; expmod, the recursive steps in expmod are equivalent
+;; to computing the Miller-Rabin sequence.
+
+
+
+
+
+
+;; 4. Recursion Magic of expmod Function.
+
 
 (define (expmod-traced base exp m)
   (define sequence empty)
@@ -189,13 +397,6 @@
 (define (run a n)
   (printf "~a\n" (expmod-traced a (- n 1) n))
   (printf "~a\n" (miller-rabin-sequence a n)))
-
-(run 29 5881) ;; 5881 is prime.
-(run 29 46657) ;; 11 also
-
-;; Strictly speaking, 
-;; Miller Rabin sequence always looks like
-;; (* * * * * ... ==> 1)
 
 ;; The check for non-trivial roots combined with
 ;; Fermat test check is equivalent to Miller-Rabin test.
