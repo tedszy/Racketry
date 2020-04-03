@@ -80,15 +80,19 @@
                        (string-join row separator))
                      normalized-table)))))
 
-;; Automatically changes cells into strings, with
-;; reasonable defaults.
+;; Automatically changes cells into strings,
+;; with reasonable defaults. #t and #f are hard
+;; to read, we print them as True and False.
 (define (format-table/default #:header (header #f)
                               #:flonum-precision (flonum-precision 5)
                               body)
   (define (format-default cell)
-    (if (flonum? cell)
-        (format-real cell flonum-precision)
-        (format "~a" cell)))
+    (cond ((flonum? cell)
+           (format-real cell flonum-precision))
+          ((boolean? cell)
+           (if cell "True" "False"))
+          (else
+           (format "~a" cell))))
   (if header
       (format-table #:separator " | "
                     #:header-char #\-
