@@ -341,19 +341,36 @@
         (values (- (current-milliseconds) t1)
                 is-prime?)))))
 
-(define prime-time-1 (make-prime-test-timer prime?))
-(define prime-time-2 (make-prime-test-timer prime2?))
+;; A very handy higher-order function. It takes a function
+;;
+;;    (fn ...any number of args...) ==> result
+;;
+;; and makes a timed version of it that returns multiple
+;; values: the result and the time it took.
+;;
+;;   (fn ...args...) ==> result, time-it-took
+;;
+;; I should put this function into an SICP library.
+(define (make-timed-function fn)
+  (lambda args
+    (let ((start-time (current-milliseconds)))
+      (let ((result (apply fn args)))
+        (values result
+                (- (current-milliseconds) start-time))))))
+
+(define prime-time-1 (make-timed-function prime?))
+(define prime-time-2 (make-timed-function prime2?))
 
 ;; Construct performance table for exercise 1.23.
-(define (time-table-123 timed-prime-predicate-A
-                        timed-prime-predicate-B . my-primes)
+(define (time-table-123 timed-A
+                        timed-B . my-primes)
   (displayln
    (format-table/default
     #:flonum-precision 2
     #:header (list "p" "prime test A" "prime test B" "ratio A/B")
     (map (lambda (p)
-           (let-values (((timeA resultA) (timed-prime-predicate-A p))
-                        ((timeB resultB) (timed-prime-predicate-B p)))
+           (let-values (((resultA timeA) (timed-A p))
+                        ((resultB timeB) (timed-B p)))
              (list p
                    (format "~a ~ams" resultA timeA)
                    (format "~a ~ams" resultB timeB)
@@ -365,7 +382,8 @@
 ;; (apply time-table-123 prime-time-1 prime-time-2
 ;;        our-12-big-primes)
 ;;
-;;               p | prime test A | prime test B | ratio A/B
+;;               p   prime test A   prime test B   ratio A/B
+;; ---------------------------------------------------------     
 ;;     10000000019 |       #t 1ms |       #t 1ms |      1.00
 ;;     10000000033 |       #t 2ms |       #t 1ms |      2.00
 ;;     10000000061 |       #t 2ms |       #t 1ms |      2.00
@@ -403,7 +421,7 @@
 (define (prime3? n)
   (= n (get-smallest-divisor3 n)))
 
-(define prime-time-3 (make-prime-test-timer prime3?))
+(define prime-time-3 (make-timed-function prime3?))
 
 ;; Check it on a bigger prime.
 ;;
@@ -423,10 +441,9 @@
 ;; Check this for the 12 primes we found above. Is it so?
 ;; If not, can we explain why?
 
-;; It's convenient it is to have this make-prime-test-timer
-;; higher order function!
+;; It's convenient it is to have this higher order function!
 (define ft-prime-time
-  (make-prime-test-timer
+  (make-timed-function
    (lambda (p)
      (ft-prime? p 10000))))
 
@@ -436,7 +453,7 @@
     #:header (list "prime" "ft results" "time/log(prime)")
     #:flonum-precision 7
     (map (lambda (p)
-           (let-values (((runtime result) (timed-prime-predicate p)))
+           (let-values (((result runtime) (timed-prime-predicate p)))
              (list p
                    (format "~a ms, ~a" runtime result)
                    (/ runtime (log p 10)))))
@@ -477,8 +494,121 @@
 
 ;; Exercise 1.25 ========================================
 
+;; Alyssa says she can use the recursive fast exponentiation
+;; procedure from previous exercises to write expmod this way:
+
+(define (alyssa-expmod base exp m)
+  (remainder (fast-expt base exp) m))
+
+(define (fast-expt b n)
+  (define (square x) (* x x))
+  (cond ((= n 0)
+         1)
+        ((odd? n) 
+         (* b (fast-expt b (sub1 n))))
+        (else
+         (square (fast-expt b (/ n 2))))))
+
+;; Why is this a bad idea? It's a bad idea because fast-expt
+;; does not reduce the recursive iterations mod m. The result
+;; of each fast-expr step can be huge integers, the last of
+;; which is finally passed to 'remainder'. Giant bigints take
+;; up memory and have to be garbage colleced. We want to avoid this.
+;; By putting the mod calculation inside the recursive exponentiation,
+;; the procedure never deals with integers bigger than m^2.
+;;
+;; Let's calculate times to see that the bigints generated
+;; by Alyssa's function really do affect performance.
+
+(define timed-alyssa-expmod (make-timed-function alyssa-expmod))
+(define timed-expmod (make-timed-function expmod))
+
+(define (alyssa-table)
+  (define (make-row name fn exp)
+    (let-values (((_ tt) (fn 13 exp 91)))
+      (list name 13 exp 91 tt)))
+  (define big-power 1000000)
+  (displayln
+   (format-table/default
+    #:header (list "procedure" "base" "exp" "mod" "time")
+    (list (make-row "expmod" timed-expmod big-power)
+          (make-row "alyssa" timed-alyssa-expmod big-power)))))
+
+;; (alyssa-table)
+;;
+;; procedure   base       exp   mod   time
+;; ---------------------------------------
+;;    expmod |   13 | 1000000 |  91 |    0
+;;    alyssa |   13 | 1000000 |  91 |  139
+;;
+;; For big powers we see a big difference in performance.
+
 
 ;; Exercise 1.26 ========================================
+
+;; Eva has written expmod this way...
+
+(define (eva-expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (* (eva-expmod base (/ exp 2) m)
+                       (eva-expmod base (/ exp 2) m)) m))
+        (else
+         (remainder (* base (eva-expmod base (- exp 1) m)) m))))
+
+;; ...rather than...
+;;
+;; (define (expmod base exp m)
+;;   (define (square x) (* x x))
+;;   (cond ((= exp 0) 1)
+;;         ((even? exp)
+;;          (remainder (square (expmod base (/ exp 2) m)) m))
+;;         (else 
+;;          (remainder (* base (expmod base (- exp 1) m)) m))))
+;;
+;; What's wrong with Eva's version?
+;;
+;; expmod is a Theta(log(n)) procedure. The function 'square'
+;; evaluates it's argument once, then passes the result to *.
+;; But in Eva's version, two recursive calls to expmod are
+;; made with every step. Thus we have:
+;;
+;; expmod     ==> 1 call  1 call  ... 1 call ==> log(n) calls.
+;; eva-expmod ==> 2 calls 2 calls ... 2 calls ==> 2^(log(n))
+;;
+;; which is Theta(n)!
+
+(define timed-eva-expmod (make-timed-function eva-expmod))
+
+(define (eva-table)
+  (define (make-row exp)
+    (let-values (((_ time-expmod) (timed-expmod 13 exp 91))
+                 ((__ time-eva) (timed-eva-expmod 13 exp 91)))
+      (list (format "13^~a mod 91" exp)
+            time-expmod
+            time-eva
+            (/ exp time-eva 1.0))))
+  (displayln
+   (format-table/default
+    #:header (list "task" "expmod time" "eva time" "exponent / eva time")
+    (list (make-row 1000000)
+          (make-row 5000000)
+          (make-row 10000000)
+          (make-row 15000000)
+          (make-row 20000000)))))
+
+;; (eva-table)
+;;
+;;               task   expmod time   eva time   exponent / eva time
+;; -----------------------------------------------------------------
+;;  13^1000000 mod 91 |           0 |       50 |         20000.00000
+;;  13^5000000 mod 91 |           0 |      293 |         17064.84642
+;; 13^10000000 mod 91 |           0 |      586 |         17064.84642
+;; 13^15000000 mod 91 |           0 |      684 |         21929.82456
+;; 13^20000000 mod 91 |           0 |     1171 |         17079.41930
+;;
+;; That's a reasonable demonstration that Eva's computation
+;; goes as Theta(n) where n is the size of the exponent.
 
 
 ;; Exercise 1.27 ========================================
