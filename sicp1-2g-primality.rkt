@@ -237,15 +237,19 @@
 ;; Since this is mod n, one of the factors on the left-hand
 ;; side must be divisible by n. So it must be that...
 ;;
+;;                     a^(n-1) = 1 (Fermat-test value is 1)
+;;
+;;                     and
+;;
 ;;    either           a^k - 1 = 0
 ;;    or               a^k + 1 = 0
 ;;    or           a^(k*2) + 1 = 0
 ;;    or                      ...
 ;;    or     a^(k*2^(e-1)) + 1 = 0  (all mod n)
 ;;
-;; In other words,
+;; Where we call a^(n-1) mod n the "Fermat-test value." In other words,
 ;;
-;;    if n is prime then
+;;    if n is prime then a^(n-1) = 1 AND 
 ;;    either            a^k =  1
 ;;    or                a^k = -1
 ;;    or            (a^k)^2 = -1
@@ -255,15 +259,17 @@
 ;;
 ;; In other words again,
 ;;
-;;    if n is prime then the either the first term
-;;    of the Miller-Rabin sequence is 1 or any term
-;;    of the Miller-Rabin sequence is -1.
+;;    if n is prime then the Fermat-test value is 1 AND
+;;    the either the first term of the Miller-Rabin sequence
+;;    is 1 or any term of the Miller-Rabin sequence is -1.
 ;;
 ;; The logical negation of this is:
 ;;
-;;   if the first term of the Miller-Rabin sequence
-;;   is not 1, and none of the terms of the Miller-Rabin
-;;   sequence are -1 (mod n), then n IS COMPOSITE.
+;;    if either the Fermat-test value is NOT 1 or
+;;       the first term of the Miller-Rabin sequence
+;;       is not 1 and none of the terms of the Miller-Rabin
+;;       sequence are -1 (mod n),
+;;    then n IS COMPOSITE.
 ;;
 ;; If the choice of 'a' gives a sequence that passes
 ;; this condition, then we can call 'a' a "composite witness".
@@ -612,12 +618,14 @@
 
 
 
+
+
+
+
+
+
 ;; if fermat condition is not met, you wont see any roots
 ;; in the sequence, trivial or nontrivial!
-
-
-
-
 
 ;;  (* * * * * * * ==> 1)
 ;;  all stars not 1,-1
