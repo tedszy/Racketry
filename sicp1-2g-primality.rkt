@@ -232,9 +232,9 @@
 ;; and now it's clear that this can be repeatedly factored
 ;; as differences of squares. If we do it carefully, we get:
 ;;
-;; (a^k - 1)*(a^k + 1)*(a^(k*2) + 1)*(a^(k*2^2) + 1)*...*(a^(k*2^(e-1)) + 1 = 0
+;; (a^k-1)*(a^k+1)*(a^(k*2)+1)*(a^(k*2^2)+1)*...*(a^(k*2^(e-1))+1) = 0
 ;;
-;; Since this is 0 mod n, one of the factors on the left-hand
+;; Since this is mod n, one of the factors on the left-hand
 ;; side must be divisible by n. So it must be that...
 ;;
 ;;    either           a^k - 1 = 0
@@ -366,40 +366,258 @@
 ;; And that is what SICP means when they say the Miller-Rabin
 ;; test "can't be fooled". 
 ;;
-;; But can it be that the tree-recursive expmod function
-;; somehow finds these few non-trivial roots for more than
-;; half the 'a's? No, because as we shall see by tracing
+;; But can it be that the direct-recursive expmod function
+;; somehow finds those few non-trivial roots for more than
+;; half the a's? No, because as we shall see by tracing
 ;; expmod, the recursive steps in expmod are equivalent
 ;; to computing the Miller-Rabin sequence.
 
+;; 4. Recursion Magic of the expmod Function.
+;; ==========================================
 
-
-
-
-
-;; 4. Recursion Magic of expmod Function.
-
+;; Goind back to the fast exponentiation mod m algorithm we did
+;; in earlier exercises. The algorithm is based on the
+;; following recursion relation:
+;;
+;;    F(a,q) mod m = (F(a, q/2))^2  if q is even
+;;                 = a*F(a, q-1)    if q is odd
+;;
+;; with initial condition:
+;;
+;;    F(a,0) = 1. 
+;;
+;; This is a classic and beautiful example of recursion.
+;; The problem of computing F(a,q) is decomposed into
+;; computing smaller problems F(a,q/2) and F(a,q-1) of
+;; the same form. Finally the recursion reaches the initial
+;; condition F(a,0), which is really the only think that
+;; the process needs to know how to compute as far as F is
+;; concerned. Let's expand the recursive calls for F(a,n-1)
+;; which is the computation of a^(n-1) mod n...
+;;
+;; Let n-1 =  k*2^e as before...
+;;
+;;    F(a, k*2^e) = ( F(a, k*2^(e-1)) )^2            
+;;                = ( (F(a, k*2^(e-2)))^2 )^2        
+;;                = ( ((F(a, k*2^(e-3)))^2)^2 )^2
+;;
+;;                ...
+;;
+;;                = ( (...((F(a, k))^2)^2...)^2 )^2
+;;
+;;                ...
+;;
+;; Now the recursion goes off on a tangent computing F(a,k).
+;; When it comes back with the value of F(a,k), it will compute
+;;
+;;                = ( (...((F(a, k))^2)^2...)^2 )^2        (**)
+;;
+;; Imagine if we had a square function square(x) = (x)^2 that
+;; prints out the value of its argument x before it evaluates x^2.
+;; If we used this square function on the above expression (**),
+;; the following sequence would be printed out...
+;;
+;;    F(a,k), F(a,k)^2, (F(a,k)^2)^2, ... (...((F(a,k)^2)^2 ...)^2
+;;
+;; which is
+;;
+;;    a^k,   a^(k*2),    a^(k*2^2), ...   a^(k*2^(e-1))
+;;
+;; which is the Miller-Rabin sequence! Amazingly, the Miller-Rabin
+;; sequence is hidden in the recursive steps of expmod!
+;;
+;; Let's modify exmpod to employ a square(x) function that pushes
+;; it's argument on a list called 'sequence'. We use multiple-values
+;; to return the expmod computation and the sequence of arguments
+;; that appeared in square(x).
 
 (define (expmod-traced base exp m)
   (define sequence empty)
+  (define (square x)
+    (set! sequence (cons (prettify-residue x m) sequence))
+    (remainder (* x x) m))
   (define (expmod base exp m)
-    (define (square x)
-      (set! sequence (cons (if (= x (- m 1)) -1 x) sequence))
-      (remainder (* x x) m))
     (cond ((= exp 0) 1)
           ((even? exp)
            (remainder (square (expmod base (/ exp 2) m)) m))
           (else 
-           (remainder (* base (expmod base (sub1 exp) m)) m))))
-  (reverse (cons (expmod base exp m)
-                 (cons '==> sequence))))
+           (remainder (* base (expmod base (- exp 1) m)) m))))
+  (values (expmod base exp m)
+          (reverse sequence)))
 
-(define (run a n)
-  (printf "~a\n" (expmod-traced a (- n 1) n))
-  (printf "~a\n" (miller-rabin-sequence a n)))
+;; Use that to compute the Fermat value a^(n-1) mod n...
 
-;; The check for non-trivial roots combined with
-;; Fermat test check is equivalent to Miller-Rabin test.
+(define (expmod-sequence a n)
+  (expmod-traced a (- n 1) n))
+
+;; Let's try this and compare with known Miller-Rabin sequences.
+;;
+;; n=641, 17^640 mod 641...
+;; 
+;;    (miller-rabin-sequence 17 641)
+;;    ==> '(42 482 282 40 318 487 -1)
+;;
+;;    (expmod-sequence 17 641)
+;;    ==> 1
+;;        '(17 289 42 482 282 40 318 487 -1)
+;;
+;; n=5881, 29^5880 mod 5881...
+;;
+;;    (miller-rabin-sequence 29 5881)
+;;    ==> '(-1 1 1)
+;;
+;;    (expmod-sequence 9 5881)
+;;    ==> 1
+;;        '(9 81 239 2442 30 2219 2314 2450 5515 -1 1 1)
+;;
+;; The Miller-Rabin sequences are there, but at the tail of
+;; the expmod lists. What are those other numbers? Recall that
+;; expmod goes off into a tangent computing a^k before it
+;; can finish off the Miller-Rabin part. That computational
+;; tangent involves more square roots, hence the extra numbers
+;; at the beginning.
+;;
+;; So there *is* a difference between the Miller-Rabin sequence
+;; and SICP's recursive expmod sequence: the expmod sequence contains
+;; some extra terms.
+;;
+;; Looking at the table for n=21 above, we see that only two of the
+;; Miller-Rabin sequences have non-trivial roots. Thus we expect
+;; the same for the expmod sequences: only two will show nontrivial
+;; roots for n=21, no matter what 'a'. Ah, you may object: but
+;; maybe there are nontrivial roots in the OTHER terms of the
+;; expmod sequence, the ones that come BEFORE the Miller-Rabin terms.
+
+(define (MR-expmod-table n)
+  (displayln
+   (format-table/default
+    #:header (list "a" "MR seq" "expmod seq" "expmod has NT root?")
+    (for/list ((a (range 2 (- n 1))))
+      (let-values (((_ seq-expmod) (expmod-sequence a n)))
+        (let ((seq-mr (miller-rabin-sequence a n)))
+          (list a
+                seq-mr
+                seq-expmod
+                (has-nontrivial-root? seq-expmod n))))))))
+
+;; Finds all square roots of b mod m.
+(define (square-roots-of b m)
+  (let loop ((a 1) (result empty))
+    (cond ((= a m)
+           (reverse result))
+          ((= (modulo (* a a) m) b)
+           (loop (+ a 1) (cons a result)))
+          (else
+           (loop (+ a 1) result)))))
+
+;; The function 'square-roots-of' is a useful tool for finding
+;; interesting examples. Take n=561, a Charmichael number. The
+;; square roots of 1 mod 561 are..
+;;
+;; (square-roots-of 1 561)
+;; ==> '(1 67 188 254 307 373 494 560)
+;;
+;; The square roots of 67 are...
+;;
+;; (square-roots-of 67 561)
+;; ==> '(89 98 166 208 353 395 463 472)
+;;
+;; And the square roots of 463 are...
+;;
+;; (square-roots-of 463 561)
+;; ==> '(32 100 155 274 287 406 461 529)
+;;
+;; So we have, say, 100^2 = 463 and 463^2 = 67 and 67^2 = 1 mod 561.
+;;
+;; Let's compare the Miller-Rabin sequence with the expmod
+;; sequence for a=100, n=561.
+;;
+;; (miller-rabin-sequence 100 561)
+;; ==> '(298 166 67 1)
+;;
+;; (expmod-sequence 100 561)
+;; ==> 1
+;;     '(100 463 67 1 100 298 166 67 1)
+;;
+;; Ah! There is a nontrivial root of 1 in the
+;; beginning part of the expmod sequence. Let's make
+;; a table comparing sequences for every 'a' mod 21.
+;;
+;; (MR-expmod-table 21)
+;;
+;; a    MR seq      expmod seq   expmod has NT root?
+;; --------------------------------------------------
+;;  2 | (11 16) |   (2 4 11 16) |               False
+;;  3 | (12 18) |   (3 9 12 18) |               False
+;;  4 |  (16 4) |   (4 16 16 4) |               False
+;;  5 | (17 16) |   (5 4 17 16) |               False
+;;  6 |  (6 15) |   (6 15 6 15) |               False
+;;  7 |   (7 7) |     (7 7 7 7) |               False
+;;  8 |   (8 1) |     (8 1 8 1) |                   8
+;;  9 |  (18 9) |   (9 18 18 9) |               False
+;; 10 |  (19 4) |  (10 16 19 4) |               False
+;; 11 |   (2 4) |   (11 16 2 4) |               False
+;; 12 |   (3 9) |   (12 18 3 9) |               False
+;; 13 |  (13 1) |   (13 1 13 1) |                  13
+;; 14 |  (14 7) |   (14 7 14 7) |               False
+;; 15 | (15 15) | (15 15 15 15) |               False
+;; 16 |  (4 16) |   (16 4 4 16) |               False
+;; 17 |   (5 4) |   (17 16 5 4) |               False
+;; 18 |  (9 18) |   (18 9 9 18) |               False
+;; 19 | (10 16) |  (19 4 10 16) |               False
+;;
+;; Only two expmod sequences have nontrivial roots. We don't
+;; see 50% of expmod sequences revealing non-trivial roots.
+;;
+;; Exercise:
+;;
+;; Don't make the dumb mistake (like I did) of using a
+;; tail-recursive version of fast-exponentiation instead
+;; of direct recursion expmod like SICP says to use.
+;; Why not? What is the sequence generated by the arguments
+;; to square(x) in the tail-recursive version? It's illuminating
+;; to see this difference between the direct recursion
+;; formulation of a computation and the tail-recursive
+;; formulation. The tail-recursive one is more efficient,
+;; but doesn't have the magic.
+
+;; 5. Equivalence of Miller-Rabin and SICP idea.
+;; =============================================
+
+;; SICP pg.74 continues:
+;;
+;;    Modify the expmod procedure to signal if it
+;;    discovers a nontrivial square root of 1, and
+;;    use this to implement the Miller-Rabin test with
+;;    a procedure analogous to fermat-test .
+;;
+;; The question that immediately troubles us is this:
+;; why should this be equivalent to the Miller-Rabin test?
+;; It's not obvious at all. Yes, we have shown that the
+;; expmod sequence contains the Miller-Rabin sequence,
+;; but we still have a bit more work to do to demonstrate
+;; the equivalence of the SICP idea and the Miller-Rabin idea.
+;;
+;; We will show this:
+;;
+;;    The Fermat test combined with the check for
+;;    non-trivial square roots of 1 in the expmod
+;;    sequence, is equivalent (almost!) to the Miller-
+;;    Rabin test.
+
+
+
+
+
+
+
+
+;; if fermat condition is not met, you wont see any roots
+;; in the sequence, trivial or nontrivial!
+
+
+
+
 
 ;;  (* * * * * * * ==> 1)
 ;;  all stars not 1,-1
@@ -417,6 +635,16 @@
 
 ;; Exercise 1.28 ========================================
 
+;; (define (sicp-miller-rabin-test a n)
+;;   (define (expmod base exp m)
+;;     (cond ((= exp 0) 1)
+;;           ((even? exp)
+
+
+;;            (remainder (square (expmod base (/ exp 2) m)) m))
+;;           (else 
+;;            (remainder (* base (expmod base (- exp 1) m)) m))))
+;;   (= (expmod a (- n 1) n) 1))
 
 
 
