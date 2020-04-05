@@ -1,4 +1,4 @@
-;;; sicp1-2f-primality.rkt
+;;; sicp1-2g-miller-rabin.rkt
 ;;;
 ;;; Exercise 1.28.
 ;;;
@@ -45,6 +45,8 @@
 
 (define (mod-square a n)
   (modulo (* a a) n))
+
+;; We use modulo rather than remainder.
 
 (define (non-trivial-root? a n)
   (and (not (= (modulo a n) 1))
@@ -201,16 +203,16 @@
         (loop-over-powers-of-2 (+ e 1) (/ k 2)))))
 
 ;; Some examples of Miller-Rabin sequences.
-;;
-;; (miller-rabin-sequence 17 641)
-;; ==> '(42 482 282 40 318 487 -1)
-;; 
-;; (miller-rabin-sequence 92 281317)
-;; ==> '(1 1)
-;;
-;; (miller-rabin-sequence 29 5881)
-;; ==> '(-1 1 1)
-;;
+
+(check-equal?
+ (miller-rabin-sequence 17 641) '(42 482 282 40 318 487 -1))
+
+(check-equal?
+ (miller-rabin-sequence 92 281317) '(1 1))
+
+(check-equal?
+ (miller-rabin-sequence 29 5881) '(-1 1 1))
+
 ;; 641, 281317 and 5881 are prime and in every case the sequence
 ;; has to contain a non-trivial root (and it does).
 
@@ -441,13 +443,13 @@
   (define sequence empty)
   (define (square x)
     (set! sequence (cons (prettify-residue x m) sequence))
-    (remainder (* x x) m))
+    (modulo (* x x) m))
   (define (expmod base exp m)
     (cond ((= exp 0) 1)
           ((even? exp)
-           (remainder (square (expmod base (/ exp 2) m)) m))
+           (square (expmod base (/ exp 2) m)))
           (else 
-           (remainder (* base (expmod base (- exp 1) m)) m))))
+           (modulo (* base (expmod base (- exp 1) m)) m))))
   (values (expmod base exp m)
           (reverse sequence)))
 
@@ -459,23 +461,25 @@
 ;; Let's try this and compare with known Miller-Rabin sequences.
 ;;
 ;; n=641, 17^640 mod 641...
-;; 
-;;    (miller-rabin-sequence 17 641)
-;;    ==> '(42 482 282 40 318 487 -1)
-;;
-;;    (expmod-sequence 17 641)
-;;    ==> 1
-;;        '(17 289 42 482 282 40 318 487 -1)
-;;
+ 
+(check-equal?
+ (miller-rabin-sequence 17 641) '(42 482 282 40 318 487 -1))
+
+(check-equal?
+ (let-values (((fermat-val seq) (expmod-sequence 17 641)))
+   (list fermat-val seq))
+ '(1 (17 289 42 482 282 40 318 487 -1)))
+
 ;; n=5881, 29^5880 mod 5881...
-;;
-;;    (miller-rabin-sequence 29 5881)
-;;    ==> '(-1 1 1)
-;;
-;;    (expmod-sequence 9 5881)
-;;    ==> 1
-;;        '(9 81 239 2442 30 2219 2314 2450 5515 -1 1 1)
-;;
+
+(check-equal?
+ (miller-rabin-sequence 29 5881) '(-1 1 1))
+
+(check-equal?
+ (let-values (((fermat-val seq) (expmod-sequence 9 5881)))
+   (list fermat-val seq))
+ '(1 (9 81 239 2442 30 2219 2314 2450 5515 -1 1 1)))
+
 ;; The Miller-Rabin sequences are there, but at the tail of
 ;; the expmod lists. What are those other numbers? Recall that
 ;; expmod goes off into a tangent computing a^k before it
@@ -519,35 +523,38 @@
 ;; The function 'square-roots-of' is a useful tool for finding
 ;; interesting examples. Take n=561, a Charmichael number. The
 ;; square roots of 1 mod 561 are..
-;;
-;; (square-roots-of 1 561)
-;; ==> '(1 67 188 254 307 373 494 560)
-;;
+
+(check-equal?
+ (square-roots-of 1 561) '(1 67 188 254 307 373 494 560))
+
 ;; The square roots of 67 are...
-;;
-;; (square-roots-of 67 561)
-;; ==> '(89 98 166 208 353 395 463 472)
-;;
+
+(check-equal?
+ (square-roots-of 67 561) '(89 98 166 208 353 395 463 472))
+
 ;; And the square roots of 463 are...
-;;
-;; (square-roots-of 463 561)
-;; ==> '(32 100 155 274 287 406 461 529)
-;;
+
+(check-equal?
+ (square-roots-of 463 561) '(32 100 155 274 287 406 461 529))
+
 ;; So we have, say, 100^2 = 463 and 463^2 = 67 and 67^2 = 1 mod 561.
 ;;
 ;; Let's compare the Miller-Rabin sequence with the expmod
 ;; sequence for a=100, n=561.
+
+(check-equal?
+ (miller-rabin-sequence 100 561) '(298 166 67 1))
+
+(check-equal?
+ (let-values (((fermat-val seq) (expmod-sequence 100 561)))
+   (list fermat-val seq))
+ '(1 (100 463 67 1 100 298 166 67 1)))
+
+;; Ah! There is a nontrivial root of 1 (67) in the
+;; beginning part of the expmod sequence.
 ;;
-;; (miller-rabin-sequence 100 561)
-;; ==> '(298 166 67 1)
-;;
-;; (expmod-sequence 100 561)
-;; ==> 1
-;;     '(100 463 67 1 100 298 166 67 1)
-;;
-;; Ah! There is a nontrivial root of 1 in the
-;; beginning part of the expmod sequence. Let's make
-;; a table comparing sequences for every 'a' mod 21.
+;; Let's make a table comparing sequences for
+;; every 'a' mod 21.
 ;;
 ;; (MR-expmod-table 21)
 ;;
@@ -751,18 +758,23 @@
 (check-false
  (miller-rabin-prime? 561 10)
  "should not be fooled by Charmichael")
+
 (check-true
  (miller-rabin-prime? 641 10)
  "should be true for prime")
+
 (check-true
  (miller-rabin-prime? 64111111111111 10)
  "should be true for prime")
+
 (check-false
  (miller-rabin-prime? 6601 10)
  "should not be fooled by Charmichael")
+
 (check-false
  (miller-rabin-prime? 46657 10)
  "should not be fooled by Charmichael")
+
 (check-false
  (miller-rabin-prime? (expt 641 5) 10)
  "should not be fooled by power of prime")
