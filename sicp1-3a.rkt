@@ -2,7 +2,12 @@
 ;;;
 ;;; Exercises ... 
 ;;;
-;;; 
+;;; We don't want to be limited to expressing 5x5x5 for
+;;; a particular number, 5. We want to express the concept
+;;; of 'cubing' something. And then, the higher-order
+;;; concept of summing the cubes of things.
+
+
 
 ;; to do
 
@@ -17,7 +22,8 @@
 (require rackunit
          "format-table.rkt")
 
-;; Beautiful examples of direct recursion.
+
+;; Some beautiful examples of direct recursion.
 
 ;; S(a, b) = a + S(a+1, b)
 ;;  S(b,b) = 0.
@@ -109,9 +115,56 @@
     (+ x dx))
   (* dx (sum F (+ a (/ dx 2.0)) next b)))
 
-(check-= (integral cube 0 1 0.001) 0.25 0.001)
+(check-= (integral identity 0 1 .001) 1/2 0.001)
+(check-= (integral (lambda (x) (* x x)) 0 1 0.001) 1/3 0.001)
+(check-= (integral cube 0 1 0.001) 1/4 0.001)
+
 
 ;; Exercise 1.29 ========================================
+
+;; Simpson's integration. Definite integral of F between a and b.
+;; Let n be even and...
+;;
+;;    h = (b - a)/n
+;;
+;;    y_k = F(a + k*h).
+;;
+;;    integral_a^b f = (h/3)*[               1*y_0 +
+;;                             + 4*y_1     + 2*y_2 +
+;;                             + 4*y_3     + 2*y_4 + 
+;;                             ...
+;;                             + 4*y_(n-1)
+;;                                         + 1*y_n   ]
+;; 
+;; Write this using our 'sum' higher-order concept.
+
+;; Put float versions of a, b to avoid large rationals.
+(define (simpson f a b n)
+  (define h (/ (- b a) n))
+  (define (y k)
+    (f (+ a (* k h))))
+  (define (term k)
+    (cond ((or (= k 0) (= k n)) (y k))
+          ((odd? k) (* 4 (y k)))
+          (else (* 2 (y k)))))
+  (define (next k)
+    (+ k 1))
+  (* (/ h 3)
+     (sum term 0.0 next n)))
+
+(check-= (simpson cube 0.0 1.0 1000) 1/4 0.000001)
+
+(define (relative-error x y)
+  (* 100.0 (/ (abs (- x y)) y) ))
+
+;; > (relative-error (integral cube 0.0 1.0 0.01) 1/4)
+;; 0.004999999999832916
+;;
+;; > (relative-error (simpson cube 0.0 1.0 100) 1/4)
+;; 3.3306690738754696e-14
+;;
+;; We see that Simpson's method with n=100 is much
+;; better than the direct method with rectangle width 1/100.
 
 
 ;; Exercise 1.30 ========================================
