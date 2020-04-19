@@ -241,8 +241,16 @@
      (/ (pi/4-factor-numerator k)
         (pi/4-factor-denominator k))))
 
+;; Or a better way...
+(define (pi/4-factor1 k)
+  (if (odd? k)
+      (/ (+ k 1)
+         (+ k 2))
+      (/ (+ k 2)
+         (+ k 1))))
+
 ;; Need a lot of factors before we get close to pi.
-(check-= (* 4 (product pi/4-factor 1 add1 1000))
+(check-= (* 4 (product pi/4-factor1 1 add1 1000))
          pi
          0.01)
 
