@@ -1,4 +1,4 @@
-;;; sicp1-3a.rkt
+;;; sicp1-3a-accumulate.rkt
 ;;;
 ;;; Exercises 1.29 -- 1.33
 ;;;
