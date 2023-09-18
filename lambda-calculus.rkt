@@ -24,7 +24,7 @@
 ;; The lambda expressions are applied to these to
 ;; get an easy-to-understand answer.
 (define booleans (list 'True 'False))
-(define boolean->lambda (lambda (x) (if 'True *T *F)))
+(define boolean->lambda (lambda (x) (if (eq? x 'True) *T *F)))
 
 (define *not (lambda (x) (x *F *T)))
 (define *and (lambda (x y) (x y x))) ;; (x y F)
