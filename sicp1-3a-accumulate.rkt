@@ -98,7 +98,7 @@
 (check-= (sum-pi/8-1 1 100) (sum-pi/8 1 100) 0.0001)
 
 ;; Numerical integration by literally summing rectangles
-;; the way you draw them uder the curve. Area of one
+;; the way you draw them under the curve. Area of one
 ;; rectangle is Height of curve at rectangle
 ;; midpoint f(x + dx/2) multiplied by rectangle width dx.
 ;;
@@ -109,7 +109,7 @@
 ;;
 ;; Or, making the pattern clearer:
 ;;
-;;              =  [  f(a + 0*dx + dx/2
+;;              =  [  f(a + 0*dx + dx/2)
 ;;                  + f(a + 1*dx + dx/2)
 ;;                  + f(a + 2*dx + dx/2)
 ;;                  ... ]*dx
