@@ -106,8 +106,65 @@
 ;;                               => 6
 ;;
 ;; But what about (f f)? This should give an error,
-;; because 2 is not a function.
+;; because 2 is not a function. Can be explained using lambda.
 ;;
 ;; (f (lambda (g) (g 2))) => ((lambda (g) (g 2)) 2)
 ;;                        => (2 2) => error
+
+
+;; Half-interval root finding.
+;; 
+;; If f(a) is negative, and f(b) is positive,
+;; then there must be a root x, f(x) = 0, somewhere in (a, b).
+;;
+;; (1) Find midpoint x = (a+b)/2.
+;;
+;; (2) If f(x) > 0 then the root must be in (a, x).
+;;     If f(x) < 0 then the root must be in (x, b).
+;;
+;; (3) Step (2) defines new left and right bounds.
+;;     Continue this until b-a < tolerance.
+;;
+;; (4) Once tolerance is reached, return x = (b-a)/2.
+;;
+;; We add some robustness to the half-interval-method
+;; by making it check which bound is positive and which
+;; is negative.
+
+(define (average x y) (/ (+ x y) 2))
+(define (close-enough? a b) (< (abs (- a b)) 0.001))
+
+(define (half-interval-search F negative-point positive-point)
+  (let ((midpoint (average negative-point positive-point)))
+    (if (close-enough? negative-point positive-point)
+        midpoint
+        (let ((trial (F midpoint)))
+          (cond ((positive? trial)
+                 (half-interval-search F negative-point midpoint))
+                ((negative? trial)
+                 (half-interval-search F midpoint positive-point))
+                (else
+                 midpoint))))))
+
+(define (half-interval-method F a b)
+  (let ((a-val (F a))
+        (b-val (F b)))
+    (cond ((and (negative? a-val) (positive? b-val))
+           (half-interval-search F a b))
+          ((and (positive? a-val) (negative? b-val))
+           (half-interval-search F b a))
+          (else
+           (error "f(interval bounds) must be opposite signs: "
+                  a b (F a) (F b))))))
+
+(check-= (half-interval-method sin 2.0 4.0) pi 0.001)
+
+;; Find root of polynomial x^3 - 2*x -3, between 1 and 2,
+;; using lambda.
+;;
+;; (half-interval-method (lambda (x) (+ (* x x x) (* -2 x) -3))
+;;                       1.0
+;;                       2.0)
+;;
+;; => 1.89306640625
 
