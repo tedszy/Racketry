@@ -1,4 +1,4 @@
-;;; sicp1-3a-accumulate.rkt
+;;; sicp1-3b-lambda.rkt
 ;;;
 ;;; Exercises 1.34 -- 1.36
 ;;;
