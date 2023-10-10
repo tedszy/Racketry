@@ -1,6 +1,6 @@
 ;;; sicp1-3a-accumulate.rkt
 ;;;
-;;; Exercises 1.34 -- 1.xx
+;;; Exercises 1.34 -- 1.36
 ;;;
 ;;; Lambdas, local variables, let, half-interval roots,
 ;;; fixed points, average damping.
@@ -246,4 +246,77 @@
 
 ;; Exercise 1.36 ========================================
 
+;; A new fixed-point that displays steps.
+;; Actually we can build lists of lists and then pass that
+;; to format-table. We use named-let.
+
+(define (fixed-point-with-steps F initial-guess tol)
+  (define (delta v1 v2) (abs (- v1 v2)))
+  (define (close-enough? v1 v2) (< (delta v1 v2) tol))
+  (display
+   (format-table/default #:flonum-precision 10
+    (let loop ((guess initial-guess)
+               (result empty)
+               (n 0))
+      (let ((next-guess (F guess)))
+        (if (close-enough? guess next-guess)
+            (reverse (cons (list n
+                                 next-guess
+                                 (delta guess next-guess))
+                           result))
+            (loop next-guess
+                  (cons (list n
+                              guess
+                              (delta guess next-guess))
+                        result)
+                  (+ n 1))))))))
+
+;; (fixed-point-with-steps (lambda (x) (+ 1 (/ x))) 1.0 0.0001)
+;;
+;;  0 | 1.0000000000 | 1.0000000000
+;;  1 | 2.0000000000 | 0.5000000000
+;;  2 | 1.5000000000 | 0.1666666667
+;;  3 | 1.6666666667 | 0.0666666667
+;;  4 | 1.6000000000 | 0.0250000000
+;;  5 | 1.6250000000 | 0.0096153846
+;;  6 | 1.6153846154 | 0.0036630037
+;;  7 | 1.6190476190 | 0.0014005602
+;;  8 | 1.6176470588 | 0.0005347594
+;;  9 | 1.6181818182 | 0.0002042901
+;; 10 | 1.6180555556 | 0.0000780275
+;;
+;; Now solve x^x = 1000 => x*log(x) = log(1000)
+;;                      => x = log(1000)/log(x)
+;; by finding fixed-point of F(x) = log(1000)/log(x).
+;;
+;; (fixed-point-with-steps
+;;  (lambda (x) (/ (log 1000) (log x))) 1.1 0.000001)
+;;
+;; The table shows that after 42 steps we get to
+;; x = 4.5555359709.
+;;
+;; (expt 4.555555555 4.555555555)
+;; => 1000.0499502108756
+;;
+;; Let's try it with average-damping:
+;; Now it converges in 12 steps:
+;;
+;; (fixed-point-with-steps
+;;  (lambda (x) (/ (+ x (/ (log 1000) (log x))) 2))
+;;  1.1 0.000001)
+;;
+;;  0 |  1.1000000000 | 35.6882868921
+;;  1 | 36.7882868921 | 17.4361113603
+;;  2 | 19.3521755319 |  8.5103418523
+;;  3 | 10.8418336796 |  3.9717853274
+;;  4 |  6.8700483521 |  1.6428233902
+;;  5 |  5.2272249620 |  0.5252647668
+;;  6 |  4.7019601952 |  0.1197634220
+;;  7 |  4.5821967732 |  0.0220625435
+;;  8 |  4.5601342297 |  0.0038138103
+;;  9 |  4.5563204194 |  0.0006510576
+;; 10 |  4.5556693618 |  0.0001108988
+;; 11 |  4.5555584630 |  0.0000188830
+;; 12 |  4.5555395800 |  0.0000032151
+;; 13 |  4.5555358175 |  0.0000005474
 
