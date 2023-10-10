@@ -2,8 +2,12 @@
 ;;;
 ;;; Exercises 1.34 -- 1.xx
 ;;;
-;;; Lambdas, local variables, let,
-
+;;; Lambdas, local variables, let, half-interval roots,
+;;; fixed points, average damping.
+;;;
+;;; SICP says that defined-functions (using define)
+;;; within a function are OK, but defined values
+;;; should be avoided, for reasons to be explained later.
 
 #lang racket
 
@@ -167,4 +171,79 @@
 ;;                       2.0)
 ;;
 ;; => 1.89306640625
+
+;; Fixed points of functions.
+;;
+;; To find x such that f(x) = x, iterate f(x), f(f(x)) for
+;; some guess x, and stop when the difference between two
+;; iterations is less than some tolerance.
+
+(define (fixed-point F initial-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) 0.00001))
+  (define (trial guess)
+    (let ((next-guess (F guess)))
+      (if (close-enough? guess next-guess)
+          next-guess
+          (trial next-guess))))
+  (trial initial-guess))
+
+;; Version using named-let...
+
+(define (fixed-point1 F initial-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) 0.00001))
+  (let loop ((guess initial-guess))
+    (let ((next-guess (F guess)))
+      (if (close-enough? guess next-guess)
+          next-guess
+          (loop next-guess)))))
+
+(check-= (fixed-point cos 1.0)
+         (fixed-point1 cos 1.0) 0.0001)
+
+;; Solve x = sin(x) + cos(x):
+;;
+;; (fixed-point1 (lambda (x) (+ (sin x) (cos x))) 1.0)
+;; => 1.2587315962971173
+
+;; Square root as fixed-point search.
+;; Let y be sqrt(x), then y^2 = x and y = x/y.
+;; so iterating F(y) = x/y until fixed point
+;; will find the root y = F(y). But since this
+;; does not converge, we try F(y) = average
+;; of y and x/y:
+
+(define (fixed-point-sqrt x)
+  (fixed-point (lambda (y) (/ (+ y (/ x y)) 2))
+               1.0))
+
+;; We can also justify this by noting that y = y
+;; is fixed, so y+y = y+y/x leads the the same
+;; fixed point, and also (y+y)/2 = y = (y+y/x)/2.
+;;
+;; This idea is also called average-damping.
+
+(check-= (fixed-point-sqrt 3) (sqrt 3) 0.0001)
+(check-= (fixed-point-sqrt 2) (sqrt 2) 0.0001)
+
+
+;; Exercise 1.35 ========================================
+
+;; x -> 1 + 1/x or x = 1 + 1/x when x is the fixed-point.
+;; then x^2 - x - 1 = 0 and the solutions are the golden
+;; ratios
+;;
+;; phi1 = (1+sqrt(5))/2
+;; phi2 = (1-sqrt(5))/2
+;;
+;; The first one can be found by fixed-point:
+
+(check-= (fixed-point1 (lambda (x) (+ 1 (/ x))) 1.0)
+         (/ (+ 1 (sqrt 5)) 2)
+         0.0001)
+
+
+;; Exercise 1.36 ========================================
+
 
