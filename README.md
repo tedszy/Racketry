@@ -18,7 +18,7 @@ Some SICP examples in the text of the book are refactored
 in various ways that I found interesting or 
 enlightening. Procedures are given longer, more
 descriptive names. Interesting problems provide opportunities for
-going on tangents: there are many of those opportunities in SICP.
+going on tangents: there are many such opportunities in SICP.
 
 * **SICP 1.1 -- 1.2.** Exercises 1.1 to 1.28. Expressions. 
 Evaluation models: normal order, applicative order. 
@@ -29,7 +29,13 @@ Tail-recursion, fast exponentiation, advanced ways of computing
 Fibonacci numbers. gcds, Lame's theorem. The Miller-Rabin prime
 test.
 
+* **SICP 1.3.** Exercises 1.29 to 1.37. Lambdas, half-interval
+bisection method, fixed-points, average-damping, continued fractions.
+
+
 ## Projects
+
+* Pretty-printing tables.
 
 * Investigation of Lambda-calculus (based on an exercise in SICP.) 
 
