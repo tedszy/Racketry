@@ -2,12 +2,12 @@
 ;;;
 ;;; Exercises 1.37 -- 1.xx
 ;;;
-;;; Continued fractions, phi, 
-;;; 
+;;; Continued fractions, phi, euler fraction for e,
 ;;;
 ;;; 
-;;; 
-;;; 
+;;; It's very easy to write an incorrect continued
+;;; fraction recursion scheme when you are testing
+;;; it on N_k = D_k = all ones. 
 
 
 #lang racket
@@ -26,12 +26,12 @@
 (define phi (/ (+ 1 (sqrt 5)) 2))
 
 (define (continued-fraction N D n)
-  (let loop ((k 1)
-             (q (/ (N 1) (D 1))))
-    (if (= k n )
+  (let loop ((n n)
+             (q (/ (N n) (D n))))
+    (if (= 1 n)
         q
-        (loop (+ k 1)
-              (/ (N k) (+ (D k) q))))))
+        (loop (- n 1)
+              (/ (N (- n 1)) (+ (D (- n 1)) q))))))
 
 ;; (displayln
 ;;  (* 1.0 (continued-fraction (lambda (k) 1) (lambda (k) 1) 12)))
@@ -91,9 +91,14 @@
 ;;    (D-euler j)))
 ;; => (1 2 1 1 4 1 1 6 1 1 8 1 1 10 1 1 12 1 1)
 
-(check-= (* 1.0 (continued-fraction1
+(check-= (* 1.0 (continued-fraction
                  (lambda (k) 1.0)
                  D-euler
-                 100))
+                 10))
          (- (exp 1) 2)
-         0.0000000001)
+         0.00001)
+
+;; Finally!
+
+
+;; Exercise 1.39 ========================================
