@@ -1,8 +1,9 @@
 ;;; sicp1-3c-continued-fractions.rkt
 ;;;
-;;; Exercises 1.37 -- 1.xx
+;;; Exercises 1.37 -- 1.39.
 ;;;
 ;;; Continued fractions, phi, euler fraction for e,
+;;; Lambert's continued fraction.
 ;;;
 ;;; 
 ;;; It's very easy to write an incorrect continued
@@ -102,3 +103,24 @@
 
 
 ;; Exercise 1.39 ========================================
+
+;; Lambert's continued fraction for tan(x).
+;;
+;; N(k) = x, -x^2, =x^2, =x^2...
+;; D(k) = 1, 3, 5, ...
+
+(define (lambert-tan x)
+  (continued-fraction (lambda (k)
+                        (if (= k 1)
+                            x
+                            (- (* x x))))
+                      (lambda (k)
+                        (- (* 2 k) 1))
+                      10))
+
+(let ((tol 0.000001))
+  (check-= (lambert-tan 1.1) (tan 1.1) tol)
+  (check-= (lambert-tan 2.1) (tan 2.1) tol)
+  (check-= (lambert-tan -0.6) (tan -0.6) tol))
+
+;; Works!
