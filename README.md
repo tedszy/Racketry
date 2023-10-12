@@ -29,6 +29,10 @@ Tail-recursion, fast exponentiation, advanced ways of computing
 Fibonacci numbers. gcds, Lame's theorem. The Miller-Rabin prime
 test.
 
+Online version of SICP is here:
+
+[Structure and Interpretation of Computer Programs (online)]
+
 * **SICP 1.3.** Exercises 1.29 to 1.46. Lambdas, half-interval
 bisection method, fixed-points, average-damping, continued fractions,
 Newton's method of roots, function smoothing, iterative improvement.
@@ -46,4 +50,4 @@ Newton's method of roots, function smoothing, iterative improvement.
 
 
 
-
+[Structure and Interpretation of Computer Programs (online)]: https://sarabander.github.io/sicp/html/index.xhtml
