@@ -1,11 +1,11 @@
 ;;; sicp1-3c-continued-fractions.rkt
 ;;;
-;;; Exercises 1.37 -- 1.43.
+;;; Exercises 1.37 -- 1.46.
 ;;;
 ;;; Continued fractions, phi, euler fraction for e,
 ;;; Lambert's continued fraction, procedures returning
 ;;; procedures, Newton's method, generalized Newton's
-;;; method, composition, 
+;;; method, composition, iterative improvement.
 ;;; 
 ;;; It's very easy to write an incorrect continued
 ;;; fraction recursion scheme when you are testing
@@ -13,6 +13,7 @@
 ;;;
 ;;; "First class" objects in a programming language
 ;;; have the fewest restrictions.
+
 
 #lang racket
 
@@ -274,7 +275,7 @@
 
 
 ;; Exercise 1.43 ========================================
-w
+
 ;; Create an nth-repeatedly composed function from f.
 ;; We use pure recursion with named-let. You need named-let
 ;; here otherwise you're going to be passing a lambda
@@ -291,5 +292,154 @@ w
 (check-equal? ((repeated-composition square 2) 5) 625)
 
 
-;; Exercise 1.41 ========================================
+;; Exercise 1.44 ========================================
+
+;; Given f(x) then a smoothed version of f at x is
+;; (f(x-dx) + f(x) + f(x+dx))/3. N-fold smoothing
+;; is this process repeated N times.
+
+(define (make-smoothed f dx)
+  (lambda (x)
+    (/ (+ (f (+ x dx)) (f x) (f (- x dx))) 3)))
+
+(define (make-n-fold-smoothed f dx n)
+  (repeated-composition (lambda (g)
+                          (make-smoothed g dx)) n))
+
+
+;; Exercise 1.45 ========================================
+
+;; Averaging (x + x/y^(n-1))/2 works for square roots (n=2)
+;; and for cube roots (n=3) but not for higher roots.
+
+(define (nth-root y n)
+  (fixed-point1 (make-average-damped
+                 (lambda (x) (/ y (expt x (- n 1)))))
+                0.0001))
+
+;; (nth-root 2 2) and (nth-root 2 3) work...
+
+(check-= (nth-root 2 2) (sqrt 2) 0.00001)
+(check-= (nth-root 2 3) (expt 2 1/3) 0.00001)
+
+;; But (nth-root 2 4) doesn't work.
+
+(define (nth-root1 y n)
+  (fixed-point1
+   (make-average-damped
+    (make-average-damped
+     (lambda (x) (/ y (expt x (- n 1))))))
+   0.000001))
+
+(let ((tol 0.00001))
+  (check-= (nth-root1 10 4) (expt 10 1/4) tol)
+  (check-= (nth-root1 10 5) (expt 10 1/5) tol)
+  (check-= (nth-root1 10 6) (expt 10 1/6) tol)
+  (check-= (nth-root1 10 7) (expt 10 1/7) tol))
+
+;; Now it works up to n=7 but fails at n=8.
+
+(define (nth-root2 y n)
+  (fixed-point1
+   (make-average-damped
+    (make-average-damped
+     (make-average-damped
+      (lambda (x) (/ y (expt x (- n 1)))))))
+   0.000001))
+
+;; Above works up to (nth-root2 y 15) but
+;; fails to find the 16th root of y.
+;; We conclude that to find the nth root of y,
+;; we must iterate average-damped k times,
+;; such that n <= 2^k.
+
+(define (nth-root3 y n)
+  (let ((k (inexact->exact (floor (log n 2)))))
+    (fixed-point1
+     ((repeated-composition
+        make-average-damped
+        k)
+      (lambda (x) (/ y (expt x (- n 1)))))
+     0.000001)))
+
+(check-= (nth-root3 10 52) (expt 10 1/52) 0.00001)
+
+;; Unfortunately this doesn't work when n >= 53.
+;; If tolerance is lowered to  0.00001, then it works
+;; again up to n = 62.
+
+
+;; Exercise 1.46 ========================================
+
+;; Iterative improvement. If guess is not good enough,
+;; then improve it. Thus iterative improvement depends
+;; on two procedures: (1) determine if guess is good enough
+;; and (2) improving a guess.
+;;
+;; Recall...
+
+(define (improve guess x) (average guess (/ x guess)))
+(define (good-enough? guess x)
+  (< (abs (- (* guess guess) x )) 0.001))
+
+(define (sqrt3 x)
+  (let loop ((guess 1.0)
+             (x x))
+    (if (good-enough? guess x)
+        guess
+        (loop (improve guess x) x))))
+
+;; One way to create a general iterative-improve
+;; is to have it take as arguments lambdas which
+;; encapsulate the initial guess.
+
+(define (iterative-improve good-enough? improve-guess)
+  (lambda (guess)
+    (let loop ((guess guess))
+      (if (good-enough? guess)
+          guess
+          (loop (improve-guess guess))))))
+
+;; Then call this on the improvement and good-enough?
+;; lambdas, and invoke the resulting closure on the
+;; intial guess 1.0:
+
+(define (sqrt4 x)
+  ((iterative-improve
+     (lambda (guess) (good-enough? guess x))
+     (lambda (guess) (improve guess x)))
+   1.0))
+
+(check-= (sqrt4 10) (sqrt 10) 0.0001)
+
+;; Doing the same for fixed-point...
+
+;; Fixed-point can be implemented with iterative-improve
+;; by supplying appropriate lambdas and guess:
+
+(define (fixed-point2 F)
+  ((iterative-improve
+    (lambda (guess) (< (abs (- guess (F guess))) 0.00001))
+    (lambda (guess) (F guess)))
+   1.0))
+
+;; Create a new sqrt function by passing the
+;; appropriate F:
+
+(define (sqrt5 x)
+  (fixed-point2
+   (make-average-damped (lambda (y) (/ x y)))))
+
+(check-= (sqrt5 2) (sqrt 2) 0.00001)
+
+;; Just for fun try 7th root this way:
+
+(define (7th-root x)
+  (fixed-point2
+   ((repeated-composition make-average-damped 2)
+    (lambda (y) (/ x y y y y y y)))))
+
+(check-= (7th-root 10) (expt 10 1/7) 0.0001)
+
+;; Ok!
 

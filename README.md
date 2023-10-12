@@ -29,8 +29,11 @@ Tail-recursion, fast exponentiation, advanced ways of computing
 Fibonacci numbers. gcds, Lame's theorem. The Miller-Rabin prime
 test.
 
-* **SICP 1.3.** Exercises 1.29 to 1.37. Lambdas, half-interval
-bisection method, fixed-points, average-damping, continued fractions.
+* **SICP 1.3.** Exercises 1.29 to 1.46. Lambdas, half-interval
+bisection method, fixed-points, average-damping, continued fractions,
+Newton's method of roots, function smoothing, iterative improvement.
+
+* **SICP 2.1**
 
 
 ## Projects
